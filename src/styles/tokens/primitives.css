@@ -1,0 +1,396 @@
+/* ACH design tokens — primitives layer, adapted from Figma Local Variables. */
+:root {
+
+  /* dimension */
+  --primitives-dimension-2xl: 32;
+  --primitives-dimension-xl: 24;
+  --primitives-dimension-lg: 16;
+  --primitives-dimension-md: 12;
+  --primitives-dimension-sm: 8;
+  --primitives-dimension-xs: 4;
+  --primitives-dimension-xxs: 2;
+
+  /* topbar dimensions */
+  --primitives-topbar-height: 56px;
+  --primitives-topbar-padding-inline: 24px;
+  --primitives-topbar-gap: 16px;
+  --primitives-topbar-account-gap: 8px;
+  --primitives-topbar-action-size: 40px;
+  --primitives-topbar-avatar-size: 32px;
+  --primitives-topbar-divider-inset: 24px;
+  --primitives-topbar-icon-size: 24px;
+  --primitives-topbar-action-icon-size: 20px;
+
+  /* drawer dimensions */
+  --primitives-drawer-width: 640px;
+  --primitives-drawer-header-height: 60px;
+
+  /* borderRadius */
+  --primitives-border-radius-infinite: 9999px;
+  --primitives-border-radius-xl: 24px;
+  --primitives-border-radius-lg: 16px;
+  --primitives-border-radius-md: 12px;
+  --primitives-border-radius-sm: 8px;
+  --primitives-border-radius-xs: 4px;
+
+  /* opacity */
+  --primitives-opacity-high: 90;
+  --primitives-opacity-mid: 50;
+  --primitives-opacity-low: 10;
+  --primitives-opacity-40: 0.4;
+
+  /* button dimensions */
+  --primitives-button-height-extra-large: 54px;
+
+  /* fontSizes */
+  --primitives-font-sizes-5xl: 48px;
+  --primitives-font-sizes-4xl: 36px;
+  --primitives-font-sizes-3xl: 28px;
+  --primitives-font-sizes-2xl: 22px;
+  --primitives-font-sizes-xl: 20px;
+  --primitives-font-sizes-lg: 18px;
+  --primitives-font-sizes-md: 16px;
+  --primitives-font-sizes-sm: 14px;
+  --primitives-font-sizes-xs: 12px;
+  --primitives-font-sizes-2xs: 10px;
+
+  /* colors */
+  --primitives-colors-neutral-1000: #000000;
+  --primitives-colors-neutral-0: #ffffff;
+  --primitives-colors-neutral-50: #fafafa;
+  --primitives-colors-neutral-75: #f8f8f8;
+  --primitives-colors-neutral-100: #f5f5f5;
+  --primitives-colors-neutral-150: #eeeeee;
+  --primitives-colors-neutral-200: #e5e5e5;
+  --primitives-colors-neutral-250: #dcdcdc;
+  --primitives-colors-neutral-300: #d4d4d4;
+  --primitives-colors-neutral-350: #bdbdbd;
+  --primitives-colors-neutral-400: #a3a3a3;
+  --primitives-colors-neutral-450: #8a8a8a;
+  --primitives-colors-neutral-500: #737373;
+  --primitives-colors-neutral-600: #525252;
+  --primitives-colors-neutral-650: #484848;
+  --primitives-colors-neutral-700: #404040;
+  --primitives-colors-neutral-750: #333333;
+  --primitives-colors-neutral-800: #262626;
+  --primitives-colors-neutral-850: #1f1f1f;
+  --primitives-colors-neutral-900: #171717;
+  --primitives-colors-neutral-950: #0a0a0a;
+  --primitives-colors-red-50: #fff5f5;
+  --primitives-colors-red-75: #ffecec;
+  --primitives-colors-red-100: #ffe0e0;
+  --primitives-colors-red-150: #ffd0d0;
+  --primitives-colors-red-200: #ffc1c1;
+  --primitives-colors-red-250: #ffa0a0;
+  --primitives-colors-red-300: #ff8080;
+  --primitives-colors-red-350: #ff6060;
+  --primitives-colors-red-400: #ff4040;
+  --primitives-colors-red-450: #f01a1a;
+  --primitives-colors-red-500: #e00000; /* Core brand — primary CTA background */
+  --primitives-colors-red-600: #c00000;
+  --primitives-colors-red-650: #a80000;
+  --primitives-colors-red-700: #a00000;
+  --primitives-colors-red-750: #900000;
+  --primitives-colors-red-800: #800000;
+  --primitives-colors-red-850: #700000;
+  --primitives-colors-red-900: #600000;
+  --primitives-colors-red-950: #3d0000;
+  --primitives-colors-blue-50: #f2f7ff;
+  --primitives-colors-blue-75: #e8f0ff;
+  --primitives-colors-blue-100: #d9e7ff;
+  --primitives-colors-blue-150: #bdd3ff;
+  --primitives-colors-blue-200: #a3c0ff;
+  --primitives-colors-blue-250: #88acff;
+  --primitives-colors-blue-300: #6d99ff;
+  --primitives-colors-blue-350: #5487ff;
+  --primitives-colors-blue-400: #3b74ff;
+  --primitives-colors-blue-450: #2065ff;
+  --primitives-colors-blue-500: #005cff;
+  --primitives-colors-blue-600: #004fe8;
+  --primitives-colors-blue-650: #0046cc;
+  --primitives-colors-blue-700: #003eb8;
+  --primitives-colors-blue-750: #00359c;
+  --primitives-colors-blue-800: #002d85;
+  --primitives-colors-blue-850: #00256e;
+  --primitives-colors-blue-900: #001740;
+  --primitives-colors-blue-950: #000912;
+  --primitives-colors-green-50: #f0fdf4;
+  --primitives-colors-green-75: #e8fbf0;
+  --primitives-colors-green-100: #dcfce7;
+  --primitives-colors-green-150: #cafbd8;
+  --primitives-colors-green-200: #bbf7d0;
+  --primitives-colors-green-250: #a0f0bc;
+  --primitives-colors-green-300: #86efac;
+  --primitives-colors-green-350: #65e896;
+  --primitives-colors-green-400: #4ade80;
+  --primitives-colors-green-450: #33d36d;
+  --primitives-colors-green-500: #22c55e;
+  --primitives-colors-green-600: #16a34a;
+  --primitives-colors-green-650: #159143;
+  --primitives-colors-green-700: #15803d;
+  --primitives-colors-green-750: #166038;
+  --primitives-colors-green-800: #166534;
+  --primitives-colors-green-850: #155c2e;
+  --primitives-colors-green-900: #14532d;
+  --primitives-colors-green-950: #052e16;
+  --primitives-colors-orange-50: #fffbeb;
+  --primitives-colors-orange-75: #fff8dc;
+  --primitives-colors-orange-100: #fef3c7;
+  --primitives-colors-orange-150: #fdeea8;
+  --primitives-colors-orange-200: #fde68a;
+  --primitives-colors-orange-250: #fcdb6a;
+  --primitives-colors-orange-300: #fcd34d;
+  --primitives-colors-orange-350: #fcc838;
+  --primitives-colors-orange-400: #fbbf24;
+  --primitives-colors-orange-450: #f8af16;
+  --primitives-colors-orange-500: #f59e0b;
+  --primitives-colors-orange-600: #d97706;
+  --primitives-colors-orange-650: #c26507;
+  --primitives-colors-orange-700: #b45309;
+  --primitives-colors-orange-750: #a04a0b;
+  --primitives-colors-orange-800: #92400e;
+  --primitives-colors-orange-850: #843b0f;
+  --primitives-colors-orange-900: #78350f;
+  --primitives-colors-orange-950: #451a03;
+  --primitives-colors-purple-50: #faf5ff;
+  --primitives-colors-purple-75: #f3e8ff;
+  --primitives-colors-purple-100: #e9d5ff;
+  --primitives-colors-purple-150: #e0c4ff;
+  --primitives-colors-purple-200: #d8b4fe;
+  --primitives-colors-purple-250: #c98bfd;
+  --primitives-colors-purple-300: #c084fc;
+  --primitives-colors-purple-350: #b060fa;
+  --primitives-colors-purple-400: #a855f7;
+  --primitives-colors-purple-450: #9e3ff2;
+  --primitives-colors-purple-500: #9333ea;
+  --primitives-colors-purple-600: #7e22ce;
+  --primitives-colors-purple-650: #7220b8;
+  --primitives-colors-purple-700: #6b21a8;
+  --primitives-colors-purple-750: #5e1d94;
+  --primitives-colors-purple-800: #581c87;
+  --primitives-colors-purple-850: #4c1875;
+  --primitives-colors-purple-900: #3e1263;
+  --primitives-colors-purple-950: #3b0764;
+  --primitives-colors-teal-50: #f0fdfa;
+  --primitives-colors-teal-75: #e6fbf7;
+  --primitives-colors-teal-100: #ccfbf1;
+  --primitives-colors-teal-150: #b0f5e7;
+  --primitives-colors-teal-200: #99f6e4;
+  --primitives-colors-teal-250: #72edda;
+  --primitives-colors-teal-300: #5eead4;
+  --primitives-colors-teal-350: #40dfc4;
+  --primitives-colors-teal-400: #2dd4bf;
+  --primitives-colors-teal-450: #20c5b0;
+  --primitives-colors-teal-500: #14b8a6;
+  --primitives-colors-teal-600: #0f766e;
+  --primitives-colors-teal-650: #0d6a62;
+  --primitives-colors-teal-700: #0d6059;
+  --primitives-colors-teal-750: #0b5249;
+  --primitives-colors-teal-800: #115e59;
+  --primitives-colors-teal-850: #0c4b47;
+  --primitives-colors-teal-900: #134e4a;
+  --primitives-colors-teal-950: #042f2e;
+  --primitives-colors-magenta-50: #fdf4ff;
+  --primitives-colors-magenta-75: #faeaff;
+  --primitives-colors-magenta-100: #f5d0fe;
+  --primitives-colors-magenta-150: #f2bdfe;
+  --primitives-colors-magenta-200: #f0abfc;
+  --primitives-colors-magenta-250: #ec84fa;
+  --primitives-colors-magenta-300: #e879f9;
+  --primitives-colors-magenta-350: #e458f4;
+  --primitives-colors-magenta-400: #e040f0;
+  --primitives-colors-magenta-450: #dc2aed;
+  --primitives-colors-magenta-500: #d946ef;
+  --primitives-colors-magenta-600: #a21caf;
+  --primitives-colors-magenta-650: #96199f;
+  --primitives-colors-magenta-700: #86198f;
+  --primitives-colors-magenta-750: #72177a;
+  --primitives-colors-magenta-800: #701a75;
+  --primitives-colors-magenta-850: #5e1661;
+  --primitives-colors-magenta-900: #5b1260;
+  --primitives-colors-magenta-950: #4a044e;
+  --primitives-colors-lime-50: #f7fee7;
+  --primitives-colors-lime-75: #eefcc4;
+  --primitives-colors-lime-100: #ecfccb;
+  --primitives-colors-lime-150: #d9faa0;
+  --primitives-colors-lime-200: #d9f99d;
+  --primitives-colors-lime-250: #c5f564;
+  --primitives-colors-lime-300: #bef264;
+  --primitives-colors-lime-350: #a8e630;
+  --primitives-colors-lime-400: #a3e635;
+  --primitives-colors-lime-450: #88cc18;
+  --primitives-colors-lime-500: #84cc16;
+  --primitives-colors-lime-600: #65a30d;
+  --primitives-colors-lime-650: #578f0f;
+  --primitives-colors-lime-700: #4d7c0f;
+  --primitives-colors-lime-750: #43700f;
+  --primitives-colors-lime-800: #3f6212;
+  --primitives-colors-lime-850: #335610;
+  --primitives-colors-lime-900: #365314;
+  --primitives-colors-lime-950: #1a2e05;
+  --primitives-colors-grass-50: #f1fff1;
+  --primitives-colors-grass-75: #e7fee7;
+  --primitives-colors-grass-100: #d5fcd5;
+  --primitives-colors-grass-150: #b8f8b8;
+  --primitives-colors-grass-200: #9af39a;
+  --primitives-colors-grass-250: #7cef7c;
+  --primitives-colors-grass-300: #5ee95e;
+  --primitives-colors-grass-350: #43e443;
+  --primitives-colors-grass-400: #22e022;
+  --primitives-colors-grass-450: #10de10;
+  --primitives-colors-grass-500: #00dd00;
+  --primitives-colors-grass-600: #00b000;
+  --primitives-colors-grass-650: #009d00;
+  --primitives-colors-grass-700: #008700;
+  --primitives-colors-grass-750: #007100;
+  --primitives-colors-grass-800: #005c00;
+  --primitives-colors-grass-850: #004700;
+  --primitives-colors-grass-900: #003300;
+  --primitives-colors-grass-950: #001f00;
+
+  /* score scale */
+  --primitives-colors-score-low: #fecaca;
+  --primitives-colors-score-fair: #fed7aa;
+  --primitives-colors-score-good: #fde68a;
+  --primitives-colors-score-very-good: #d9f99d;
+  --primitives-colors-score-excellent: #bbf7d0;
+  --primitives-colors-score-low-strong: #ef4444;
+  --primitives-colors-score-fair-strong: #f97316;
+  --primitives-colors-score-good-strong: #eab308;
+  --primitives-colors-score-very-good-strong: #84cc16;
+  --primitives-colors-score-excellent-strong: #22c55e;
+  --primitives-colors-score-muted: #c3c2b7;
+
+  /* fontFamilies */
+  --primitives-font-families-display: "Lexend Variable";
+  --primitives-font-families-body: "Lexend Variable";
+
+  /* fontWeights */
+  --primitives-font-weights-display-regular: "Regular";
+  --primitives-font-weights-display-medium: "Medium";
+  --primitives-font-weights-display-bold: "Bold";
+  --primitives-font-weights-body-regular: "Regular";
+  --primitives-font-weights-body-medium: "Medium";
+  --primitives-font-weights-body-bold: "Bold";
+
+  /* letterSpacing */
+  --primitives-letter-spacing-2xl: 0.0729999989271164px;
+  --primitives-letter-spacing-xl: 0.019999999552965164px;
+  --primitives-letter-spacing-lg: 0.009999999776482582px;
+  --primitives-letter-spacing-md: 0px;
+  --primitives-letter-spacing-sm: -0.009999999776482582px;
+  --primitives-letter-spacing-xs: -0.019999999552965164px;
+
+  /* shadows */
+  --primitives-shadows-xs-color: rgba(0, 0, 0, 0.05);
+  --primitives-shadows-xs-x: 0;
+  --primitives-shadows-xs-y: 1;
+  --primitives-shadows-xs-blur: 2;
+  --primitives-shadows-xs-spread: 0;
+  --primitives-shadows-sm-color: rgba(0, 0, 0, 0.1);
+  --primitives-shadows-sm-shadow-1-x: 0;
+  --primitives-shadows-sm-shadow-1-y: 1;
+  --primitives-shadows-sm-shadow-1-blur: 3;
+  --primitives-shadows-sm-shadow-1-spread: 0;
+  --primitives-shadows-sm-shadow-2-x: 0;
+  --primitives-shadows-sm-shadow-2-y: 1;
+  --primitives-shadows-sm-shadow-2-blur: 2;
+  --primitives-shadows-sm-shadow-2-spread: -1;
+  --primitives-shadows-md-color: rgba(0, 0, 0, 0.1);
+  --primitives-shadows-md-shadow-1-x: 0;
+  --primitives-shadows-md-shadow-1-y: 4;
+  --primitives-shadows-md-shadow-1-blur: 6;
+  --primitives-shadows-md-shadow-1-spread: -1;
+  --primitives-shadows-md-shadow-2-x: 0;
+  --primitives-shadows-md-shadow-2-y: 2;
+  --primitives-shadows-md-shadow-2-blur: 4;
+  --primitives-shadows-md-shadow-2-spread: -2;
+
+  /* dimension */
+  --primitives-dimension-3xl: 64;
+  --primitives-boolean: 1;
+
+  /* colors */
+  --primitives-colors-red-550: #dc2626;
+
+  /* borderWidth */
+  --primitives-border-width-default: 1px;
+
+  /* padding */
+  --primitives-padding-1: 4px;
+  --primitives-padding-2: 8px;
+  --primitives-padding-3: 12px;
+  --primitives-padding-4: 16px;
+  --primitives-padding-5: 20px;
+  --primitives-padding-6: 24px;
+  --primitives-padding-8: 32px;
+  --primitives-padding-10: 40px;
+  --primitives-padding-12: 48px;
+  --primitives-padding-14: 56px;
+  --primitives-padding-16: 64px;
+  --primitives-padding-18: 72px;
+  --primitives-padding-20: 80px;
+
+  /* borderWidth */
+  --primitives-border-width-0: 0px;
+  --primitives-border-width-2: 2px;
+  --primitives-border-width-4: 4px;
+  --primitives-border-width-8: 8px;
+
+  /* padding */
+  --primitives-padding-7: 28px;
+  --primitives-padding-9: 36px;
+  --primitives-padding-11: 44px;
+  --primitives-padding-13: 52px;
+  --primitives-padding-15: 60px;
+  --primitives-padding-17: 68px;
+  --primitives-padding-19: 76px;
+
+  /* shadows */
+  --primitives-shadows-lg-color: rgba(0, 0, 0, 0.1);
+  --primitives-shadows-lg-shadow-1-x: 0;
+  --primitives-shadows-lg-shadow-1-y: 10;
+  --primitives-shadows-lg-shadow-1-blur: 15;
+  --primitives-shadows-lg-shadow-1-spread: -3;
+  --primitives-shadows-lg-shadow-2-x: 0;
+  --primitives-shadows-lg-shadow-2-y: 4;
+  --primitives-shadows-lg-shadow-2-blur: 6;
+  --primitives-shadows-lg-shadow-2-spread: -4;
+  --primitives-shadows-xl-color: rgba(0, 0, 0, 0.1);
+  --primitives-shadows-xl-shadow-1-x: 0;
+  --primitives-shadows-xl-shadow-1-y: 20;
+  --primitives-shadows-xl-shadow-1-blur: 25;
+  --primitives-shadows-xl-shadow-1-spread: -5;
+  --primitives-shadows-xl-shadow-2-x: 0;
+  --primitives-shadows-xl-shadow-2-y: 8;
+  --primitives-shadows-xl-shadow-2-blur: 10;
+  --primitives-shadows-xl-shadow-2-spread: -6;
+  --primitives-shadows-2xl-color: rgba(0, 0, 0, 0.25);
+  --primitives-shadows-2xl-x: 0;
+  --primitives-shadows-2xl-y: 25;
+  --primitives-shadows-2xl-blur: 50;
+  --primitives-shadows-2xl-spread: -12;
+
+  /* lineHeights */
+  --primitives-line-heights-5xl: 58px;
+  --primitives-line-heights-4xl: 44px;
+  --primitives-line-heights-3xl: 40px;
+  --primitives-line-heights-2xl: 32px;
+  --primitives-line-heights-xl: 28px;
+  --primitives-line-heights-lg: 26px;
+  --primitives-line-heights-md: 22px;
+  --primitives-line-heights-sm: 20px;
+  --primitives-line-heights-xs: 18px;
+  --primitives-line-heights-2xs: 16px;
+  --primitives-line-heights-3xs: 14px;
+  --primitives-line-heights-4xs: 12px;
+
+  /* letterSpacing */
+  --primitives-letter-spacing-tight: -1px;
+  --primitives-letter-spacing-wide: 0.15000000596046448px;
+  --primitives-letter-spacing-wider: 0.5px;
+
+  /* paragraphSpacing */
+  --primitives-paragraph-spacing-none: 0px;
+
+}

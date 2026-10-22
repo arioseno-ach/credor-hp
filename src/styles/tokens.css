@@ -1,0 +1,4 @@
+/* Load design tokens from foundational values through component aliases. */
+@import "./tokens/primitives.css";
+@import "./tokens/semantic.css";
+@import "./tokens/components.css";
