@@ -82,7 +82,7 @@ const initials = (name: string) => {
       </div>
 
       <button v-if="sortedRows.length > VISIBLE_ROWS" type="button" class="transactions__view-all">
-        View All
+        See All
       </button>
     </div>
 
@@ -222,7 +222,7 @@ const initials = (name: string) => {
   font-variant-numeric: tabular-nums;
 }
 
-/* The panel holds the tabs and the rows, so View All can sit beside the title. */
+/* The panel holds the tabs and the rows, so See All can sit beside the title. */
 .transactions__panel {
   min-width: 0;
   overflow: hidden;
