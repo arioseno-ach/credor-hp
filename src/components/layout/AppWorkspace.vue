@@ -76,9 +76,12 @@ function closeMobileNav() {
 .app-content {
   box-sizing: border-box;
   display: flex;
+  width: 100%;
+  max-width: 1280px;
   min-height: 0;
   flex: 1;
   flex-direction: column;
+  margin-inline: auto;
   gap: var(--primitives-padding-6);
   padding: var(--primitives-padding-4) var(--primitives-padding-6) var(--primitives-padding-6);
   container-name: app-workspace;
