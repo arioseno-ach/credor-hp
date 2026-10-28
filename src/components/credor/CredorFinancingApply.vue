@@ -17,6 +17,7 @@ import {
   type DocumentItem,
 } from '@/components/credor/financing-submit/requirements'
 import FinancingDocumentPreview from '@/components/credor/financing-submit/FinancingDocumentPreview.vue'
+import FinancingInvoiceEmptyState from '@/components/credor/financing-submit/FinancingInvoiceEmptyState.vue'
 import { useAppView, type ApplyEntry } from '@/composables/useAppView'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 import { formatRupiah } from '@/lib/loan-calculator'
@@ -325,249 +326,254 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="apply">
-    <button type="button" class="apply__back" :disabled="submitting" @click="goHome()">
-      <span class="apply__back-icon" aria-hidden="true"></span>
-      Back to Home
-    </button>
+    <div class="apply__container">
+      <button type="button" class="apply__back" :disabled="submitting" @click="goHome()">
+        <span class="apply__back-icon" aria-hidden="true"></span>
+        Back to Home
+      </button>
 
-    <div class="apply__layout">
-      <nav class="apply__stepper" aria-label="Application steps">
-        <div class="apply__progress">
-          <svg class="apply__ring" viewBox="0 0 44 44" aria-hidden="true">
-            <circle class="apply__ring-track" cx="22" cy="22" r="20" />
-            <circle
-              class="apply__ring-value"
-              cx="22"
-              cy="22"
-              r="20"
-              :stroke-dasharray="ringLength"
-              :stroke-dashoffset="ringLength * (1 - progress / 100)"
-            />
-          </svg>
-          <span class="apply__ring-label">{{ progress }}%</span>
-          <span class="apply__progress-copy">
-            <span class="apply__progress-title">Complete your financing application</span>
-            <span class="apply__progress-meta">Step {{ stepIndex + 1 }} of {{ steps.length }}</span>
-          </span>
-        </div>
-
-        <Timeline class="apply__timeline" :items="timelineItems" interactive @select="selectStep" />
-      </nav>
-
-      <div class="apply__main">
-        <section class="apply__invoice" :aria-label="`${product.name} application`">
-          <span class="apply__eyebrow">{{ product.name }}</span>
-
-          <div v-if="partner" class="apply__invoice-row apply__invoice-row--partner">
-            <Avatar :initials="partner.initials" />
-            <span class="apply__invoice-identity">
-              <span class="apply__invoice-counterparty">{{ partner.name }}</span>
-              <span class="apply__meta">
-                Verified partner · {{ partner.transactionCount }} transactions · avg {{ partner.averageTransaction }}
-              </span>
-            </span>
-          </div>
-
-          <div v-if="selectedInvoice" class="apply__invoice-row" :class="{ 'apply__invoice-row--nested': partner }">
-            <Avatar v-if="!partner" :initials="initials(selectedInvoice.counterparty)" />
-            <span class="apply__invoice-identity">
-              <span v-if="!partner" class="apply__invoice-counterparty">{{ selectedInvoice.counterparty }}</span>
-              <span class="apply__meta">
-                <template v-if="!partner">{{ tab.counterpartyLabel }} · </template>{{ selectedInvoice.invoiceNumber }}
-              </span>
-            </span>
-            <span class="apply__invoice-due">
-              <span class="apply__due-note" :class="{ 'apply__due-note--overdue': selectedInvoice.overdue }">
-                {{ selectedInvoice.dueNote }}
-              </span>
-              <span class="apply__meta">Due {{ selectedInvoice.dueDate }}</span>
-            </span>
-            <span class="apply__invoice-amount">{{ formatRupiah(selectedInvoice.amount) }}</span>
-          </div>
-
-          <p v-else-if="invoiceStepPosition" class="apply__meta apply__invoice-empty">
-            {{ addLater ? `No ${itemName} yet. You can add it from the application page.` : `No ${itemName} selected yet.` }}
-          </p>
-
-          <p class="apply__invoice-note">
-            <template v-if="selectedInvoice?.overdue">
-              This {{ itemName }} is overdue, so lenders may decline it or offer different terms.
-            </template>
-            Lenders send offers with the financing amount, fees and terms after review.
-          </p>
-        </section>
-
-        <div class="apply__heading">
-          <h1 id="apply-step-title" tabindex="-1">{{ step.label }}</h1>
-          <span
-            v-if="category"
-            class="apply__badge"
-            :class="step.complete ? 'apply__badge--complete' : 'apply__badge--missing'"
-          >
-            {{ step.readyCount }}/{{ step.total }} · {{ step.complete ? 'Complete' : 'Incomplete' }}
-          </span>
-        </div>
-
-        <template v-if="step.kind === 'invoice'">
-          <p class="apply__step-intro">
-            <template v-if="partner">Open {{ tab.itemLabel }} to {{ partner.name }}.</template>
-            <template v-else>Open {{ tab.itemLabel }} recorded in Achilles.</template>
-            Adding one now lets lenders review sooner.
-          </p>
-          <fieldset class="apply__choices">
-            <legend class="apply__sr-only">{{ step.label }}</legend>
-            <label
-              v-for="row in candidates"
-              :key="row.id"
-              class="apply__choice"
-              :class="{ 'apply__choice--selected': selectedId === row.id }"
-            >
-              <input
-                type="radio"
-                name="apply-invoice"
-                :checked="selectedId === row.id"
-                @change="chooseInvoice(row.id)"
+      <div class="apply__layout">
+        <nav class="apply__stepper" aria-label="Application steps">
+          <div class="apply__progress">
+            <svg class="apply__ring" viewBox="0 0 44 44" aria-hidden="true">
+              <circle class="apply__ring-track" cx="22" cy="22" r="20" />
+              <circle
+                class="apply__ring-value"
+                cx="22"
+                cy="22"
+                r="20"
+                :stroke-dasharray="ringLength"
+                :stroke-dashoffset="ringLength * (1 - progress / 100)"
               />
-              <Avatar :initials="initials(row.counterparty)" />
+            </svg>
+            <span class="apply__ring-label">{{ progress }}%</span>
+            <span class="apply__progress-copy">
+              <span class="apply__progress-title">{{ product.name }}</span>
+              <span class="apply__progress-meta">Step {{ stepIndex + 1 }} of {{ steps.length }}</span>
+            </span>
+          </div>
+
+          <Timeline class="apply__timeline" :items="timelineItems" interactive @select="selectStep" />
+        </nav>
+
+        <div class="apply__main">
+          <!-- Only shown when there is context to keep in view: a partner or a chosen invoice. -->
+          <section
+            v-if="partner || selectedInvoice"
+            class="apply__invoice"
+            :aria-label="`${product.name} application`"
+          >
+
+            <div v-if="partner" class="apply__invoice-row apply__invoice-row--partner">
+              <Avatar :initials="partner.initials" />
               <span class="apply__invoice-identity">
-                <span class="apply__choice-name">{{ row.counterparty }}</span>
-                <span class="apply__meta">{{ row.invoiceNumber }}</span>
+                <span class="apply__invoice-counterparty">{{ partner.name }}</span>
+                <span class="apply__meta">
+                  Verified partner · {{ partner.transactionCount }} transactions · avg {{ partner.averageTransaction }}
+                </span>
+              </span>
+            </div>
+
+            <div v-if="selectedInvoice" class="apply__invoice-row" :class="{ 'apply__invoice-row--nested': partner }">
+              <Avatar v-if="!partner" :initials="initials(selectedInvoice.counterparty)" />
+              <span class="apply__invoice-identity">
+                <span v-if="!partner" class="apply__invoice-counterparty">{{ selectedInvoice.counterparty }}</span>
+                <span class="apply__meta">
+                  <template v-if="!partner">{{ tab.counterpartyLabel }} · </template>{{ selectedInvoice.invoiceNumber }}
+                </span>
               </span>
               <span class="apply__invoice-due">
-                <span class="apply__due-note" :class="{ 'apply__due-note--overdue': row.overdue }">
-                  {{ row.dueNote }}
+                <span class="apply__due-note" :class="{ 'apply__due-note--overdue': selectedInvoice.overdue }">
+                  {{ selectedInvoice.dueNote }}
                 </span>
-                <span class="apply__meta">Due {{ row.dueDate }}</span>
+                <span class="apply__meta">Due {{ selectedInvoice.dueDate }}</span>
               </span>
-              <span class="apply__choice-amount">{{ formatRupiah(row.amount) }}</span>
-            </label>
-            <p v-if="candidates.length === 0" class="apply__meta">
-              No open {{ tab.itemLabel }} right now.
+              <span class="apply__invoice-amount">{{ formatRupiah(selectedInvoice.amount) }}</span>
+            </div>
+
+            <p v-else-if="addLater" class="apply__meta apply__invoice-empty">
+              No {{ itemName }} yet. You can add it from the application page.
             </p>
-            <label class="apply__choice apply__choice--later" :class="{ 'apply__choice--selected': addLater }">
-              <input type="radio" name="apply-invoice" :checked="addLater" @change="chooseInvoice(null)" />
-              <span class="apply__invoice-identity">
-                <span class="apply__choice-name">Add {{ itemName }} later</span>
-                <span class="apply__meta">Submit now and add it from the application page.</span>
-              </span>
-            </label>
-          </fieldset>
-        </template>
 
-        <template v-else-if="category">
-          <div v-if="category.id === 'company'" class="apply__company">
-            <span class="apply__verified">
-              <span class="apply__icon apply__icon--check" aria-hidden="true"></span>
-              Verified
+            <p v-if="selectedInvoice?.overdue" class="apply__invoice-note">
+              This {{ itemName }} is overdue, so lenders may decline it or offer different terms.
+            </p>
+          </section>
+
+          <div class="apply__heading">
+            <h1 id="apply-step-title" tabindex="-1">{{ step.label }}</h1>
+            <span
+              v-if="category"
+              class="apply__badge"
+              :class="step.complete ? 'apply__badge--complete' : 'apply__badge--missing'"
+            >
+              {{ step.readyCount }}/{{ step.total }} · {{ step.complete ? 'Complete' : 'Incomplete' }}
             </span>
-            <p class="apply__company-name">PT Harapan Terakhir</p>
-            <dl class="apply__company-facts">
-              <div><dt>NPWP</dt><dd>{{ verifiedCompany.npwp }}</dd></div>
-              <div><dt>NITKU</dt><dd>{{ verifiedCompany.nitku }}</dd></div>
-              <div><dt>Address</dt><dd>{{ verifiedCompany.address }}</dd></div>
-            </dl>
           </div>
 
-          <div v-for="item in category.items" :key="item.id" class="apply__field">
-            <span class="apply__field-label">
-              {{ item.label }}<span v-if="!item.optional" class="apply__required" aria-hidden="true"> *</span>
-              <span v-if="item.optional" class="apply__optional">Optional</span>
-            </span>
-
-            <div v-if="isReady(item)" class="apply__file">
-              <Button
-                variant="outline"
-                color="neutral"
-                size="small"
-                type="button"
-                class="apply__file-button"
-                :disabled="uploadingId !== null || replacingId !== null"
-                :aria-label="`Replace ${item.label}`"
-                @click="replace(item)"
+          <template v-if="step.kind === 'invoice'">
+            <p v-if="candidates.length > 0" class="apply__step-intro">
+              <template v-if="partner">Open {{ tab.itemLabel }} to {{ partner.name }}.</template>
+              <template v-else>Open {{ tab.itemLabel }} recorded in Achilles.</template>
+              Adding one now lets lenders review sooner.
+            </p>
+            <fieldset class="apply__choices">
+              <legend class="apply__sr-only">{{ step.label }}</legend>
+              <label
+                v-for="row in candidates"
+                :key="row.id"
+                class="apply__choice"
+                :class="{
+                  'apply__choice--selected': selectedId === row.id,
+                  'apply__choice--partner': partner,
+                }"
               >
-                {{ replacingId === item.id ? 'Replacing…' : 'Replace file' }}
-              </Button>
-              <span class="apply__icon apply__icon--check" aria-hidden="true"></span>
-              <span class="apply__icon apply__icon--doc" aria-hidden="true"></span>
-              <span class="apply__file-name">{{ fileNameFor(item) }}</span>
-              <button
-                type="button"
-                class="apply__icon-button"
-                :aria-label="`View ${item.label}`"
-                @click="view(item)"
-              >
-                <span class="apply__icon apply__icon--view" aria-hidden="true"></span>
-              </button>
-            </div>
-
-            <div v-else class="apply__file apply__file--empty">
-              <Button
-                variant="outline"
-                color="neutral"
-                size="small"
-                type="button"
-                class="apply__file-button apply__upload"
-                :disabled="uploadingId !== null || replacingId !== null"
-                :aria-label="`Upload ${item.label}`"
-                @click="upload(item)"
-              >
-                {{ uploadingId === item.id ? 'Uploading…' : 'Upload file' }}
-              </Button>
-              <span class="apply__meta">PDF, JPG or PNG, max 2 MB</span>
-            </div>
-          </div>
-        </template>
-
-        <template v-else>
-          <fieldset class="apply__banks">
-            <legend class="apply__sr-only">Disbursement account</legend>
-            <label v-for="account in bankAccounts" :key="account.id" class="apply__bank">
-              <span class="apply__bank-header">
                 <input
                   type="radio"
-                  name="apply-bank"
-                  :checked="bankId === account.id"
-                  @change="bankId = account.id"
+                  name="apply-invoice"
+                  :checked="selectedId === row.id"
+                  @change="chooseInvoice(row.id)"
                 />
-                <span class="apply__bank-name">Bank {{ account.bank }}</span>
+                <!-- With one partner, the name is already above, so rows lead with what tells them apart. -->
+                <span v-if="partner" class="apply__invoice-identity">
+                  <span class="apply__choice-name">{{ row.invoiceNumber }}</span>
+                  <span class="apply__meta apply__meta--truncate">
+                    {{ row.lineItems[0]?.name }}<template v-if="row.lineItems.length > 1"> +{{ row.lineItems.length - 1 }}</template>
+                  </span>
+                </span>
+                <template v-else>
+                  <Avatar :initials="initials(row.counterparty)" />
+                  <span class="apply__invoice-identity">
+                    <span class="apply__choice-name">{{ row.counterparty }}</span>
+                    <span class="apply__meta">{{ row.invoiceNumber }}</span>
+                  </span>
+                </template>
+                <span class="apply__invoice-due">
+                  <span class="apply__due-note" :class="{ 'apply__due-note--overdue': row.overdue }">
+                    {{ row.dueNote }}
+                  </span>
+                  <span class="apply__meta">Due {{ row.dueDate }}</span>
+                </span>
+                <span class="apply__choice-amount">{{ formatRupiah(row.amount) }}</span>
+              </label>
+              <FinancingInvoiceEmptyState
+                v-if="candidates.length === 0"
+                :item-label="tab.itemLabel"
+              />
+              <label class="apply__choice apply__choice--later" :class="{ 'apply__choice--selected': addLater }">
+                <input type="radio" name="apply-invoice" :checked="addLater" @change="chooseInvoice(null)" />
+                <span class="apply__invoice-identity">
+                  <span class="apply__choice-name">Add {{ itemName }} later</span>
+                  <span class="apply__meta">Submit now and add it from the application page.</span>
+                </span>
+              </label>
+            </fieldset>
+          </template>
+
+          <template v-else-if="category">
+            <div v-if="category.id === 'company'" class="apply__company">
+              <span class="apply__verified">
+                <span class="apply__icon apply__icon--check" aria-hidden="true"></span>
+                Verified
               </span>
-              <dl class="apply__bank-facts">
-                <div><dt>Account holder</dt><dd>{{ account.holder }}</dd></div>
-                <div><dt>Account number</dt><dd>{{ account.number }}</dd></div>
-                <div><dt>Bank reconciliation</dt><dd>{{ account.note }}</dd></div>
+              <p class="apply__company-name">PT Harapan Terakhir</p>
+              <dl class="apply__company-facts">
+                <div><dt>NPWP</dt><dd>{{ verifiedCompany.npwp }}</dd></div>
+                <div><dt>NITKU</dt><dd>{{ verifiedCompany.nitku }}</dd></div>
+                <div><dt>Address</dt><dd>{{ verifiedCompany.address }}</dd></div>
               </dl>
-            </label>
-          </fieldset>
+            </div>
 
-          <p class="apply__fine-print">
-            Financing partners are licensed and supervised by OJK. You review and accept a lender
-            offer before any funds are disbursed.
-          </p>
+            <div v-for="item in category.items" :key="item.id" class="apply__field">
+              <span class="apply__field-label">
+                {{ item.label }}<span v-if="!item.optional" class="apply__required" aria-hidden="true"> *</span>
+                <span v-if="item.optional" class="apply__optional">Optional</span>
+              </span>
 
-          <div class="apply__consents">
-            <Checkbox
-              v-for="item in consentItems"
-              :key="item.id"
-              :model-value="consents.includes(item.id)"
-              :label="item.label"
-              @update:model-value="toggleConsent(item.id, $event)"
-            />
-          </div>
-        </template>
+              <div v-if="isReady(item)" class="apply__file">
+                <Button
+                  variant="outline"
+                  color="neutral"
+                  size="small"
+                  type="button"
+                  class="apply__file-button"
+                  :disabled="uploadingId !== null || replacingId !== null"
+                  :aria-label="`Replace ${item.label}`"
+                  @click="replace(item)"
+                >
+                  {{ replacingId === item.id ? 'Replacing…' : 'Replace file' }}
+                </Button>
+                <span class="apply__icon apply__icon--check" aria-hidden="true"></span>
+                <span class="apply__icon apply__icon--doc" aria-hidden="true"></span>
+                <span class="apply__file-name">{{ fileNameFor(item) }}</span>
+                <button
+                  type="button"
+                  class="apply__icon-button"
+                  :aria-label="`View ${item.label}`"
+                  @click="view(item)"
+                >
+                  <span class="apply__icon apply__icon--view" aria-hidden="true"></span>
+                </button>
+              </div>
+
+              <div v-else class="apply__file apply__file--empty">
+                <Button
+                  variant="outline"
+                  color="neutral"
+                  size="small"
+                  type="button"
+                  class="apply__file-button apply__upload"
+                  :disabled="uploadingId !== null || replacingId !== null"
+                  :aria-label="`Upload ${item.label}`"
+                  @click="upload(item)"
+                >
+                  {{ uploadingId === item.id ? 'Uploading…' : 'Upload file' }}
+                </Button>
+                <span class="apply__meta">PDF, JPG or PNG, max 2 MB</span>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <fieldset class="apply__banks">
+              <legend class="apply__sr-only">Disbursement account</legend>
+              <label v-for="account in bankAccounts" :key="account.id" class="apply__bank">
+                <span class="apply__bank-header">
+                  <input
+                    type="radio"
+                    name="apply-bank"
+                    :checked="bankId === account.id"
+                    @change="bankId = account.id"
+                  />
+                  <span class="apply__bank-name">Bank {{ account.bank }}</span>
+                </span>
+                <dl class="apply__bank-facts">
+                  <div><dt>Account holder</dt><dd>{{ account.holder }}</dd></div>
+                  <div><dt>Account number</dt><dd>{{ account.number }}</dd></div>
+                  <div><dt>Bank reconciliation</dt><dd>{{ account.note }}</dd></div>
+                </dl>
+              </label>
+            </fieldset>
+
+            <p class="apply__fine-print">
+              Financing partners are licensed and supervised by OJK. You review and accept a lender
+              offer before any funds are disbursed.
+            </p>
+
+            <div class="apply__consents">
+              <Checkbox
+                v-for="item in consentItems"
+                :key="item.id"
+                :model-value="consents.includes(item.id)"
+                :label="item.label"
+                @update:model-value="toggleConsent(item.id, $event)"
+              />
+            </div>
+          </template>
+        </div>
+
       </div>
 
-      <aside class="apply__aside">
-        <div class="apply__tip">
-          <span class="apply__icon apply__icon--tip" aria-hidden="true"></span>
-          <span>
-            <span class="apply__tip-title">Why this matters</span>
-            <span class="apply__tip-text">
-              Complete, valid documents help lenders review your application faster. Files are
-              saved to your profile, so you only upload them once.
-            </span>
-          </span>
-        </div>
-      </aside>
     </div>
 
     <footer class="apply__footer">
@@ -616,6 +622,15 @@ onBeforeUnmount(() => {
   font-family: var(--primitives-font-families-body), sans-serif;
 }
 
+.apply__container {
+  display: flex;
+  width: 100%;
+  /* Stepper and form centered together: 240px stepper, gap, then a 720px form. */
+  max-width: calc(240px + var(--primitives-padding-8) + 720px);
+  flex-direction: column;
+  margin-inline: auto;
+}
+
 .apply__back {
   display: inline-flex;
   align-self: flex-start;
@@ -658,7 +673,7 @@ onBeforeUnmount(() => {
 
 .apply__layout {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) 280px;
+  grid-template-columns: 240px minmax(0, 1fr);
   align-items: start;
   gap: var(--primitives-padding-8);
   padding-bottom: var(--primitives-padding-8);
@@ -762,12 +777,6 @@ onBeforeUnmount(() => {
   background: var(--component-card-background);
 }
 
-.apply__eyebrow {
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-xs);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-2xs);
-}
 
 .apply__invoice-row {
   display: grid;
@@ -852,6 +861,16 @@ onBeforeUnmount(() => {
   gap: var(--primitives-padding-3);
   padding: var(--primitives-padding-3) var(--primitives-padding-4);
   cursor: pointer;
+}
+
+.apply__choice--partner {
+  grid-template-columns: auto minmax(0, 1fr) auto 128px;
+}
+
+.apply__meta--truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .apply__choice + .apply__choice {
@@ -1074,13 +1093,6 @@ onBeforeUnmount(() => {
   --apply-icon: url('/icons/common-actions/visibility.svg');
 }
 
-.apply__icon--tip {
-  --apply-icon: url('/icons/common-actions/lightbulb.svg');
-  width: 20px;
-  height: 20px;
-  flex-basis: 20px;
-  background: var(--semantic-icon-info-ach-color-icon-info);
-}
 
 .apply__icon-button {
   display: grid;
@@ -1157,37 +1169,10 @@ onBeforeUnmount(() => {
   gap: var(--primitives-padding-3);
 }
 
-.apply__aside {
-  position: sticky;
-  top: var(--primitives-padding-4);
-}
 
-.apply__tip {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--primitives-padding-3);
-  padding: var(--primitives-padding-4);
-  border-radius: var(--primitives-border-radius-lg);
-  background: var(--semantic-bg-info-ach-color-bg-info-surface-subtle);
-}
 
-.apply__tip-title,
-.apply__tip-text {
-  display: block;
-}
 
-.apply__tip-title {
-  font-size: var(--primitives-font-sizes-sm);
-  font-weight: 600;
-  line-height: var(--primitives-line-heights-sm);
-}
 
-.apply__tip-text {
-  margin-top: var(--primitives-padding-1);
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-sm);
-  line-height: var(--primitives-line-heights-sm);
-}
 
 .apply__footer {
   position: sticky;
@@ -1230,9 +1215,6 @@ onBeforeUnmount(() => {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
-  .apply__aside {
-    display: none;
-  }
 }
 
 @media (max-width: 760px) {
@@ -1262,7 +1244,8 @@ onBeforeUnmount(() => {
     grid-row: 1;
   }
 
-  .apply__choice {
+  .apply__choice,
+  .apply__choice--partner {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
 

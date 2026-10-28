@@ -141,19 +141,7 @@ export const credorPartners: CredorPartner[] = [
     averageTransaction: 'Rp1,1 miliar',
     transactionCount: 14,
     averageTransactionValue: 1_100_000_000,
-    invoices: [
-      {
-        id: 'inv-ku-0389',
-        counterparty: 'PT Karya Utama Dagang Internasional',
-        invoiceNumber: '#INV-2026-0389',
-        dueDate: '09 Nov',
-        dueOn: '2026-11-09',
-        dueNote: '18 days left',
-        daysLeft: 18,
-        overdue: false,
-        lineItems: [{ name: 'Bahan baku impor', quantity: 1, unitPrice: 1100000000, total: 1100000000 }],
-        amount: 1100000000,
-      },
-    ],
+    // No open invoices, so the partner flow shows the empty state.
+    invoices: [],
   },
 ]

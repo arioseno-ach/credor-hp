@@ -34,6 +34,9 @@ const totalAmount = computed(() =>
 
 const VISIBLE_ROWS = 3
 
+/** Line items are hidden for now; flip this to bring the column back. */
+const SHOW_LINE_ITEMS = false
+
 /** Overdue rows come first, the most overdue on top. The rest follow the tab rule:
  *  the longest cash-out period first for sales, the nearest due date first for purchases. */
 const sortedRows = computed(() => {
@@ -140,7 +143,12 @@ const initials = (name: string) => {
           :aria-labelledby="'transactions-tab-' + activeTabId"
         >
           <div class="transactions__rows">
-            <article v-for="row in visibleRows" :key="row.id" class="transactions-card">
+            <article
+              v-for="row in visibleRows"
+              :key="row.id"
+              class="transactions-card"
+              :class="{ 'transactions-card--items': SHOW_LINE_ITEMS }"
+            >
               <Avatar :initials="initials(row.counterparty)" :label="row.counterparty" />
 
               <div class="transactions-card__identity">
@@ -148,7 +156,7 @@ const initials = (name: string) => {
                 <a class="transactions-card__invoice" href="#">{{ row.invoiceNumber }}</a>
               </div>
 
-              <p class="transactions-card__items">
+              <p v-if="SHOW_LINE_ITEMS" class="transactions-card__items">
                 <span class="transactions-card__items-name" :title="row.lineItems[0].name">
                   {{ row.lineItems[0].name }}
                 </span>
@@ -373,11 +381,18 @@ const initials = (name: string) => {
 .transactions-card {
   display: grid;
   min-width: 0;
-  grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 1fr) 124px 128px 116px;
+  grid-template-columns: auto minmax(0, 1fr) 124px 128px 116px;
   align-items: center;
   gap: var(--primitives-padding-3);
-  margin: 0 var(--primitives-padding-4);
-  padding: var(--primitives-padding-4) 0;
+  padding: var(--primitives-padding-4);
+}
+
+.transactions-card--items {
+  grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 1fr) 124px 128px 116px;
+}
+
+.transactions-card:hover {
+  background: var(--semantic-bg-ach-color-bg-surface-hover);
 }
 
 /* Divider starts under the text, past the 48px avatar, and runs to the list's right edge. */
@@ -388,8 +403,8 @@ const initials = (name: string) => {
 .transactions-card + .transactions-card::before {
   position: absolute;
   top: 0;
-  right: calc(var(--primitives-padding-4) * -1);
-  left: calc(48px + var(--primitives-padding-3));
+  right: 0;
+  left: calc(var(--primitives-padding-4) + 48px + var(--primitives-padding-3));
   border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
   content: '';
 }

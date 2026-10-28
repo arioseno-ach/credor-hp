@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import type { CredorTransaction } from '@/components/credor/transactions'
 import { formatRupiah } from '@/lib/loan-calculator'
+import FinancingInvoiceEmptyState from './FinancingInvoiceEmptyState.vue'
 
 const props = defineProps<{
   candidates: CredorTransaction[]
@@ -110,7 +111,10 @@ watch(open, (value) => {
           v-for="row in candidates"
           :key="row.id"
           class="add-invoice__choice"
-          :class="{ 'add-invoice__choice--selected': selectedId === row.id }"
+          :class="{
+            'add-invoice__choice--selected': selectedId === row.id,
+            'add-invoice__choice--partner': partnerName,
+          }"
         >
           <input
             type="radio"
@@ -118,11 +122,22 @@ watch(open, (value) => {
             :checked="selectedId === row.id"
             @change="selectedId = row.id"
           />
-          <Avatar :initials="initials(row.counterparty)" />
-          <span class="add-invoice__identity">
-            <span class="add-invoice__name">{{ row.counterparty }}</span>
-            <span class="add-invoice__meta">{{ row.invoiceNumber }}</span>
-          </span>
+          <!-- With one partner, the name is in the header, so rows lead with what tells them apart. -->
+          <template v-if="partnerName">
+            <span class="add-invoice__identity">
+              <span class="add-invoice__name">{{ row.invoiceNumber }}</span>
+              <span class="add-invoice__meta add-invoice__meta--truncate">
+                {{ row.lineItems[0]?.name }}<template v-if="row.lineItems.length > 1"> +{{ row.lineItems.length - 1 }}</template>
+              </span>
+            </span>
+          </template>
+          <template v-else>
+            <Avatar :initials="initials(row.counterparty)" />
+            <span class="add-invoice__identity">
+              <span class="add-invoice__name">{{ row.counterparty }}</span>
+              <span class="add-invoice__meta">{{ row.invoiceNumber }}</span>
+            </span>
+          </template>
           <span class="add-invoice__due">
             <span class="add-invoice__due-note" :class="{ 'add-invoice__due-note--overdue': row.overdue }">
               {{ row.dueNote }}
@@ -131,9 +146,10 @@ watch(open, (value) => {
           </span>
           <span class="add-invoice__amount">{{ formatRupiah(row.amount) }}</span>
         </label>
-        <p v-if="candidates.length === 0" class="add-invoice__empty">
-          No open {{ itemLabel }} right now. Create one in Transaction Hub, then add it here.
-        </p>
+        <FinancingInvoiceEmptyState
+          v-if="candidates.length === 0"
+          :item-label="itemLabel"
+        />
       </fieldset>
 
       <footer class="add-invoice__footer">
@@ -148,6 +164,7 @@ watch(open, (value) => {
           Cancel
         </Button>
         <Button
+          v-if="candidates.length > 0"
           variant="default"
           color="primary"
           type="button"
@@ -249,6 +266,10 @@ watch(open, (value) => {
   cursor: pointer;
 }
 
+.add-invoice__choice--partner {
+  grid-template-columns: auto minmax(0, 1fr) auto 128px;
+}
+
 .add-invoice__choice + .add-invoice__choice {
   border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
 }
@@ -289,6 +310,11 @@ watch(open, (value) => {
   white-space: nowrap;
 }
 
+.add-invoice__meta--truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .add-invoice__due-note {
   font-size: var(--primitives-font-sizes-sm);
   font-weight: 500;
@@ -308,13 +334,6 @@ watch(open, (value) => {
   white-space: nowrap;
 }
 
-.add-invoice__empty {
-  margin: 0;
-  padding: var(--primitives-padding-4);
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-sm);
-  line-height: var(--primitives-line-heights-sm);
-}
 
 .add-invoice__footer {
   display: flex;
@@ -338,7 +357,8 @@ watch(open, (value) => {
 }
 
 @media (max-width: 640px) {
-  .add-invoice__choice {
+  .add-invoice__choice,
+  .add-invoice__choice--partner {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
 

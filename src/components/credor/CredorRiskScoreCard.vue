@@ -6,6 +6,9 @@ import type { HealthVariant } from '@/lib/prototype/types'
 
 const { open: openCompanyHealthDialog } = useCompanyHealthDialog()
 
+/** Prototype report with dummy data in the Risk Pulse v5 format. */
+const reportUrl = `${import.meta.env.BASE_URL}reports/risk-pulse-report-demo.html`
+
 const props = withDefaults(
   defineProps<{
     variant?: HealthVariant
@@ -120,10 +123,11 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
 
     <div v-else-if="isSynced" class="risk-card__footer">
       <p class="risk-card__description">Last update: {{ updatedAt }}</p>
-      <button type="button" class="risk-card__report">
+      <a class="risk-card__report" :href="reportUrl" target="_blank" rel="noopener">
         Download Report
         <span class="risk-card__report-icon" aria-hidden="true"></span>
-      </button>
+        <span class="risk-card__sr-only">(opens in a new tab)</span>
+      </a>
     </div>
 
     <p v-else class="risk-card__description">
@@ -371,6 +375,16 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 500;
   line-height: var(--primitives-line-heights-2xs);
+  text-decoration: none;
+}
+
+.risk-card__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .risk-card__report:hover {
