@@ -13,6 +13,7 @@ import type {
 const STORAGE_KEY = 'ach-prototype-state'
 const URL_STAGE_KEY = 'stage'
 const URL_MODULES_KEY = 'modules'
+const URL_DOCUMENTS_KEY = 'docs'
 
 function mergeState(base: PrototypeState, override?: PrototypeStateOverride): PrototypeState {
   // Clone so live edits never write back into defaultState or a scenario's seed arrays.
@@ -20,6 +21,7 @@ function mergeState(base: PrototypeState, override?: PrototypeStateOverride): Pr
   if (!override) return merged
 
   if (override.stage) merged.stage = override.stage
+  if (override.prefilledDocuments !== undefined) merged.prefilledDocuments = override.prefilledDocuments
   if (override.modules) Object.assign(merged.modules, structuredClone(override.modules))
   if (override.data) Object.assign(merged.data, structuredClone(override.data))
 
@@ -42,6 +44,8 @@ function readInitialState(): PrototypeState {
       state.modules.partners = modules.includes('partners')
       state.modules.transactions = modules.includes('transactions')
     }
+    const documentsParam = params.get(URL_DOCUMENTS_KEY)
+    if (documentsParam !== null) state.prefilledDocuments = documentsParam !== 'stage'
     return state
   }
 
@@ -52,6 +56,7 @@ function readInitialState(): PrototypeState {
     const parsed = JSON.parse(stored) as Partial<PrototypeState>
     return mergeState(defaultState, {
       stage: parsed.stage,
+      prefilledDocuments: parsed.prefilledDocuments,
       modules: parsed.modules,
       data: parsed.data,
     })
@@ -73,11 +78,13 @@ function syncStorage(): void {
       .filter(Boolean)
       .join(','),
   )
+  url.searchParams.set(URL_DOCUMENTS_KEY, state.prefilledDocuments ? 'prefilled' : 'stage')
   window.history.replaceState(null, '', url)
   window.localStorage.setItem(
     STORAGE_KEY,
     JSON.stringify({
       stage: state.stage,
+      prefilledDocuments: state.prefilledDocuments,
       modules: state.modules,
       data: state.data,
     }),
@@ -111,6 +118,11 @@ export function usePrototypeState() {
 
   const showTransactions = computed(() => state.modules.transactions)
 
+  /** Stage that decides which financing documents are on file. Prefilled acts like a complete profile. */
+  const documentStage = computed<PrototypeStage>(() =>
+    state.prefilledDocuments ? 'complete' : state.stage,
+  )
+
   function setStage(stage: PrototypeStage): void {
     const target = prototypeScenarios.find((item) => item.id === stage)
     const next = mergeState(defaultState, target?.overrides)
@@ -124,6 +136,11 @@ export function usePrototypeState() {
   function toggleModule(module: 'partners' | 'transactions'): void {
     if (module === 'partners') state.modules.partners = !state.modules.partners
     if (module === 'transactions') state.modules.transactions = !state.modules.transactions
+    syncStorage()
+  }
+
+  function togglePrefilledDocuments(): void {
+    state.prefilledDocuments = !state.prefilledDocuments
     syncStorage()
   }
 
@@ -147,10 +164,12 @@ export function usePrototypeState() {
     showAlert,
     showPartners,
     showTransactions,
+    documentStage,
     showLoanSimulationInMain,
     showLoanSimulationInSidebar,
     setStage,
     toggleModule,
+    togglePrefilledDocuments,
     submitApplication,
   }
 }

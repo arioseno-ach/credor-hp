@@ -15,7 +15,7 @@ const props = defineProps<{
   justSubmitted: boolean
 }>()
 
-const { state } = usePrototypeState()
+const { state, documentStage } = usePrototypeState()
 const { goHome } = useAppView()
 
 const application = computed(
@@ -263,7 +263,7 @@ const timeline = computed(() => [
                 <p>Shared with lenders for this application.</p>
               </div>
               <FinancingDocumentList
-                :stage="state.stage"
+                :stage="documentStage"
                 :uploaded-ids="source?.uploadedIds ?? []"
                 :replaced-files="source?.replacedFiles ?? {}"
               />

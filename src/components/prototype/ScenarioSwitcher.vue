@@ -5,8 +5,15 @@ import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 import { useAppView } from '@/composables/useAppView'
 import type { PrototypeStage } from '@/lib/prototype/types'
 
-const { state, scenario, showPartners, showTransactions, setStage, toggleModule } =
-  usePrototypeState()
+const {
+  state,
+  scenario,
+  showPartners,
+  showTransactions,
+  setStage,
+  toggleModule,
+  togglePrefilledDocuments,
+} = usePrototypeState()
 
 const collapsed = ref(false)
 const { view } = useAppView()
@@ -77,6 +84,15 @@ const activeStageLabel = computed(
             @change="toggleModule('transactions')"
           />
           <span>Transaksi</span>
+        </label>
+
+        <label class="scenario-bar__toggle">
+          <input
+            type="checkbox"
+            :checked="state.prefilledDocuments"
+            @change="togglePrefilledDocuments()"
+          />
+          <span>Dokumen terisi</span>
         </label>
       </div>
 
@@ -153,7 +169,8 @@ const activeStageLabel = computed(
 
 .scenario-bar__toggles {
   display: flex;
-  gap: var(--primitives-padding-4);
+  flex-wrap: wrap;
+  gap: var(--primitives-padding-2) var(--primitives-padding-4);
 }
 
 .scenario-bar__stages {

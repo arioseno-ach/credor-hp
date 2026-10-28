@@ -19,7 +19,7 @@ import {
 import FinancingSubmitForm from './FinancingSubmitForm.vue'
 
 const { isOpen, tabId, initialRowId, returnFocus, close } = useFinancingSubmit()
-const { state, submitApplication } = usePrototypeState()
+const { documentStage, submitApplication } = usePrototypeState()
 const { openApplication } = useAppView()
 
 const uploadedIds = ref<string[]>([])
@@ -50,7 +50,7 @@ const missingDocuments = computed(
       .flatMap((category) => category.items)
       .filter(
         (item) =>
-          !item.optional && !isOnFile(item, state.stage) && !uploadedIds.value.includes(item.id),
+          !item.optional && !isOnFile(item, documentStage.value) && !uploadedIds.value.includes(item.id),
       ).length,
 )
 
@@ -95,7 +95,7 @@ function reset() {
   uploadingId.value = null
   replacedFiles.value = {}
   replacingId.value = null
-  bankId.value = state.stage === 'complete' ? bankAccounts[0].id : null
+  bankId.value = documentStage.value === 'complete' ? bankAccounts[0].id : null
   consents.value = []
   submitting.value = false
   submitted.value = false
@@ -277,7 +277,7 @@ watch(isOpen, (value) => {
         <FinancingSubmitForm
           v-model:bank-id="bankId"
           v-model:consents="consents"
-          :stage="state.stage"
+          :stage="documentStage"
           :uploaded-ids="uploadedIds"
           :uploading-id="uploadingId"
           :replaced-files="replacedFiles"

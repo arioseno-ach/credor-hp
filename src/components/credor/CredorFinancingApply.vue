@@ -23,7 +23,7 @@ const props = defineProps<{
   rowId: string
 }>()
 
-const { state, submitApplication } = usePrototypeState()
+const { state, documentStage, submitApplication } = usePrototypeState()
 const { goHome, openApplication } = useAppView()
 
 const tab = computed(
@@ -37,7 +37,7 @@ const uploadedIds = ref<string[]>([])
 const uploadingId = ref<string | null>(null)
 const replacedFiles = ref<Record<string, string>>({})
 const replacingId = ref<string | null>(null)
-const bankId = ref<string | null>(state.stage === 'complete' ? bankAccounts[0].id : null)
+const bankId = ref<string | null>(documentStage.value === 'complete' ? bankAccounts[0].id : null)
 const consents = ref<string[]>([])
 const submitting = ref(false)
 const preview = ref<{ label: string; fileName: string; trigger: HTMLElement | null } | null>(null)
@@ -47,7 +47,7 @@ let replaceTimer: number | undefined
 let submitTimer: number | undefined
 
 const isReady = (item: DocumentItem) =>
-  isOnFile(item, state.stage) || uploadedIds.value.includes(item.id)
+  isOnFile(item, documentStage.value) || uploadedIds.value.includes(item.id)
 
 /** Same steps as the staging checkout: four document categories, then the bank account. */
 const steps = computed(() => [
@@ -67,8 +67,11 @@ const steps = computed(() => [
   },
 ])
 
-/** Open on the first step that still needs work, like staging does. */
-const stepIndex = ref(Math.max(0, steps.value.findIndex((step) => !step.complete)))
+/** Prefilled demos start at Company verification so the user can click through every step.
+ *  Otherwise open on the first step that still needs work, like staging does. */
+const stepIndex = ref(
+  state.prefilledDocuments ? 0 : Math.max(0, steps.value.findIndex((step) => !step.complete)),
+)
 const step = computed(() => steps.value[stepIndex.value])
 const category = computed(() => documentCategories.find((item) => item.id === step.value.id) ?? null)
 const isLastStep = computed(() => stepIndex.value === steps.value.length - 1)
@@ -223,6 +226,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="apply">
+    <button type="button" class="apply__back" @click="goHome()">
+      <span class="apply__back-icon" aria-hidden="true"></span>
+      Back
+    </button>
+
     <div class="apply__layout">
       <nav class="apply__stepper" aria-label="Application steps">
         <div class="apply__progress">
@@ -459,6 +467,41 @@ onBeforeUnmount(() => {
   flex-direction: column;
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
+}
+
+.apply__back {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: var(--primitives-padding-1);
+  margin-bottom: var(--primitives-padding-4);
+  padding: var(--primitives-padding-1) 0;
+  border: 0;
+  border-radius: var(--primitives-border-radius-xs);
+  background: none;
+  color: var(--semantic-text-ach-color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 500;
+  line-height: var(--primitives-line-heights-sm);
+}
+
+.apply__back:hover {
+  color: var(--semantic-text-ach-color-text-default);
+}
+
+.apply__back:focus-visible {
+  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline-offset: var(--primitives-border-width-2);
+}
+
+.apply__back-icon {
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
 }
 
 .apply__layout {
@@ -990,7 +1033,42 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1180px) {
-  .apply__layout {
+  .apply__back {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: var(--primitives-padding-1);
+  margin-bottom: var(--primitives-padding-4);
+  padding: var(--primitives-padding-1) 0;
+  border: 0;
+  border-radius: var(--primitives-border-radius-xs);
+  background: none;
+  color: var(--semantic-text-ach-color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 500;
+  line-height: var(--primitives-line-heights-sm);
+}
+
+.apply__back:hover {
+  color: var(--semantic-text-ach-color-text-default);
+}
+
+.apply__back:focus-visible {
+  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline-offset: var(--primitives-border-width-2);
+}
+
+.apply__back-icon {
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
+}
+
+.apply__layout {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
@@ -1000,7 +1078,42 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 760px) {
-  .apply__layout {
+  .apply__back {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: var(--primitives-padding-1);
+  margin-bottom: var(--primitives-padding-4);
+  padding: var(--primitives-padding-1) 0;
+  border: 0;
+  border-radius: var(--primitives-border-radius-xs);
+  background: none;
+  color: var(--semantic-text-ach-color-text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 500;
+  line-height: var(--primitives-line-heights-sm);
+}
+
+.apply__back:hover {
+  color: var(--semantic-text-ach-color-text-default);
+}
+
+.apply__back:focus-visible {
+  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline-offset: var(--primitives-border-width-2);
+}
+
+.apply__back-icon {
+  width: 16px;
+  height: 16px;
+  background: currentColor;
+  mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
+}
+
+.apply__layout {
     grid-template-columns: minmax(0, 1fr);
   }
 

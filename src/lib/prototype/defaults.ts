@@ -2,6 +2,7 @@ import type { PrototypeState } from './types'
 
 export const defaultState: PrototypeState = {
   stage: 'default',
+  prefilledDocuments: true,
   modules: {
     partners: false,
     transactions: false,

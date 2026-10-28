@@ -41,6 +41,8 @@ export interface BcaBankFeed {
 
 export interface PrototypeState {
   stage: PrototypeStage
+  /** Demo shortcut: every financing document is on file, whatever the stage. */
+  prefilledDocuments: boolean
   modules: {
     partners: boolean
     transactions: boolean
