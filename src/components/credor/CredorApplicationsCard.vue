@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import type { BcaBankFeed, LoanApplication } from '@/lib/prototype/types'
+import { useAppView } from '@/composables/useAppView'
 
 const MAX_APPLICATIONS = 3
 
@@ -15,6 +16,14 @@ const visibleApplications = computed(() => props.applications.slice(0, MAX_APPLI
 const expandedApplicationId = ref<string | null>(null)
 const feedExpanded = ref(false)
 
+const { openApplication } = useAppView()
+
+/** Applications submitted from the transactions table have a detail page; seeded ones expand. */
+function selectApplication(application: LoanApplication): void {
+  if (application.source) openApplication(application.id)
+  else toggleApplication(application.id)
+}
+
 function toggleApplication(id: string): void {
   expandedApplicationId.value = expandedApplicationId.value === id ? null : id
 }
@@ -27,7 +36,7 @@ function toggleApplication(id: string): void {
       <button type="button" class="applications-card__link">See All History</button>
     </header>
 
-    <div v-if="!feed" class="applications-card__empty">
+    <div v-if="!feed && applications.length === 0" class="applications-card__empty">
       <img
         class="applications-card__icon"
         src="/icons/common-actions/wysiwyg.svg"
@@ -44,6 +53,7 @@ function toggleApplication(id: string): void {
 
     <template v-else>
       <div
+        v-if="feed"
         class="applications-card__feed"
         :class="{
           'is-expanded': feedExpanded,
@@ -109,7 +119,7 @@ function toggleApplication(id: string): void {
         </div>
       </div>
 
-      <div class="applications-card__table">
+      <div v-if="visibleApplications.length > 0" class="applications-card__table">
         <div class="applications-card__table-head">
           <span>Application</span>
           <span>Status</span>
@@ -127,15 +137,17 @@ function toggleApplication(id: string): void {
           <button
             type="button"
             class="applications-card__row-main"
-            :aria-expanded="expandedApplicationId === application.id"
-            @click="toggleApplication(application.id)"
+            :aria-expanded="application.source ? undefined : expandedApplicationId === application.id"
+            @click="selectApplication(application)"
           >
             <span class="applications-card__chevron">
               <img
                 :src="
-                  expandedApplicationId === application.id
-                    ? '/icons/ui-actions/expand-less.svg'
-                    : '/icons/ui-actions/expand-more.svg'
+                  application.source
+                    ? '/icons/hardware/keyboard-arrow-right.svg'
+                    : expandedApplicationId === application.id
+                      ? '/icons/ui-actions/expand-less.svg'
+                      : '/icons/ui-actions/expand-more.svg'
                 "
                 alt=""
                 aria-hidden="true"
@@ -157,7 +169,8 @@ function toggleApplication(id: string): void {
             <span class="applications-card__row-status">{{ application.status }}</span>
           </button>
 
-          <span v-if="expandedApplicationId !== application.id" class="applications-card__row-action">
+          <span v-if="application.source" class="applications-card__row-action">View details</span>
+          <span v-else-if="expandedApplicationId !== application.id" class="applications-card__row-action">
             <span class="applications-card__action-icon" aria-hidden="true"></span>
             Add Invoice
           </span>

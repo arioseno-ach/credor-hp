@@ -4,6 +4,7 @@ import { prototypeScenarios } from './scenarios'
 import type {
   BannerVariant,
   HealthVariant,
+  LoanApplication,
   PrototypeStage,
   PrototypeState,
   PrototypeStateOverride,
@@ -14,23 +15,19 @@ const URL_STAGE_KEY = 'stage'
 const URL_MODULES_KEY = 'modules'
 
 function mergeState(base: PrototypeState, override?: PrototypeStateOverride): PrototypeState {
-  if (!override) return { ...base }
-
-  const merged: PrototypeState = {
-    ...base,
-    modules: { ...base.modules },
-    data: { ...base.data },
-  }
+  // Clone so live edits never write back into defaultState or a scenario's seed arrays.
+  const merged: PrototypeState = structuredClone(base)
+  if (!override) return merged
 
   if (override.stage) merged.stage = override.stage
-  if (override.modules) Object.assign(merged.modules, override.modules)
-  if (override.data) Object.assign(merged.data, override.data)
+  if (override.modules) Object.assign(merged.modules, structuredClone(override.modules))
+  if (override.data) Object.assign(merged.data, structuredClone(override.data))
 
   return merged
 }
 
 function readInitialState(): PrototypeState {
-  if (typeof window === 'undefined') return { ...defaultState }
+  if (typeof window === 'undefined') return mergeState(defaultState)
 
   const params = new URLSearchParams(window.location.search)
   const stageParam = params.get(URL_STAGE_KEY) as PrototypeStage | null
@@ -39,7 +36,7 @@ function readInitialState(): PrototypeState {
   if (stageParam) {
     const scenario = prototypeScenarios.find((item) => item.id === stageParam)
     const state = mergeState(defaultState, scenario?.overrides)
-    state.stage = stageParam
+    state.stage = scenario?.overrides.stage ?? stageParam
     if (modulesParam !== null) {
       const modules = modulesParam.split(',').filter(Boolean)
       state.modules.partners = modules.includes('partners')
@@ -49,7 +46,7 @@ function readInitialState(): PrototypeState {
   }
 
   const stored = window.localStorage.getItem(STORAGE_KEY)
-  if (!stored) return { ...defaultState }
+  if (!stored) return mergeState(defaultState)
 
   try {
     const parsed = JSON.parse(stored) as Partial<PrototypeState>
@@ -59,7 +56,7 @@ function readInitialState(): PrototypeState {
       data: parsed.data,
     })
   } catch {
-    return { ...defaultState }
+    return mergeState(defaultState)
   }
 }
 
@@ -130,6 +127,18 @@ export function usePrototypeState() {
     syncStorage()
   }
 
+  /** Adds a new application, or replaces a draft with the same id, and marks its invoices submitted. */
+  function submitApplication(application: LoanApplication, invoiceIds: string[]): void {
+    state.data.applications = [
+      application,
+      ...state.data.applications.filter((item) => item.id !== application.id),
+    ]
+    state.data.submittedInvoiceIds = [
+      ...new Set([...(state.data.submittedInvoiceIds ?? []), ...invoiceIds]),
+    ]
+    syncStorage()
+  }
+
   return {
     state,
     scenario,
@@ -142,5 +151,6 @@ export function usePrototypeState() {
     showLoanSimulationInSidebar,
     setStage,
     toggleModule,
+    submitApplication,
   }
 }

@@ -14,11 +14,15 @@ import LoanSimulationCard from '@/components/financing/LoanSimulationCard.vue'
 import LoanCalculatorDialog from '@/components/financing/LoanCalculatorDialog.vue'
 import CompanyHealthDialog from '@/components/financing/CompanyHealthDialog.vue'
 import PersonalisationDrawer from '@/components/personalisation/PersonalisationDrawer.vue'
+import CredorFinancingApply from '@/components/credor/CredorFinancingApply.vue'
+import CredorApplicationDetail from '@/components/credor/CredorApplicationDetail.vue'
+import { useAppView } from '@/composables/useAppView'
 import ScenarioSwitcher from '@/components/prototype/ScenarioSwitcher.vue'
 import CredorFinancingSidebar from '@/components/credor/CredorFinancingSidebar.vue'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 
 const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
+const { view } = useAppView()
 const mobileNavOpen = computed(() => isMobile.value && openMobile.value)
 
 const { bannerVariant, showAlert, showPartners, showTransactions, showLoanSimulationInMain } =
@@ -35,7 +39,17 @@ function closeMobileNav() {
     <SidebarInset class="app-workspace">
       <ScenarioSwitcher />
       <TopBar :menu-expanded="mobileNavOpen" @menu-click="toggleSidebar" />
-      <main class="app-content">
+      <main v-if="view.name === 'apply'" class="app-content">
+        <CredorFinancingApply :key="view.rowId" :tab-id="view.tabId" :row-id="view.rowId" />
+      </main>
+      <main v-else-if="view.name === 'application'" class="app-content">
+        <CredorApplicationDetail
+          :key="view.id"
+          :application-id="view.id"
+          :just-submitted="view.justSubmitted"
+        />
+      </main>
+      <main v-else class="app-content">
         <CredorOverviewHeader />
         <CredorPersonalisationAlert v-if="showAlert" />
         <div class="credor-body">

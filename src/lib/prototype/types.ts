@@ -17,6 +17,19 @@ export interface LoanApplication {
   noteTone: 'default' | 'error'
   status: string
   details: DetailField[]
+  /** Set when the application was submitted from a transactions row in this session. */
+  source?: ApplicationSource
+}
+
+export interface ApplicationSource {
+  tabId: string
+  rowId: string
+  bankId: string
+  submittedAt: string
+  /** Company documents uploaded inside the submit sheet. */
+  uploadedIds: string[]
+  /** Company documents replaced during review, by document id. */
+  replacedFiles: Record<string, string>
 }
 
 export interface BcaBankFeed {
@@ -37,6 +50,8 @@ export interface PrototypeState {
     incomingFund: number
     applications: LoanApplication[]
     bcaFeed: BcaBankFeed | null
+    /** Invoice and bill ids already sent for financing in this session. */
+    submittedInvoiceIds: string[]
   }
 }
 

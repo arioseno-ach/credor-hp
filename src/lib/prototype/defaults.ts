@@ -11,5 +11,6 @@ export const defaultState: PrototypeState = {
     incomingFund: 0,
     applications: [],
     bcaFeed: null,
+    submittedInvoiceIds: [],
   },
 }

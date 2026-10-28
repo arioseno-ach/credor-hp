@@ -57,7 +57,7 @@ export const credorTransactionTabs: CredorTransactionTab[] = [
     itemLabel: 'invoices',
     subtitle: ({ days, amount, count }) => ({
       title: `Get paid sooner on ${amount}`,
-      count: `From ${count} invoices`,
+      count: `From ${count} ${count === 1 ? 'invoice' : 'invoices'}`,
       lead: `Your next invoice won't be paid for up to`,
       days: `${days} days`,
     }),
@@ -164,7 +164,7 @@ export const credorTransactionTabs: CredorTransactionTab[] = [
     itemLabel: 'bills',
     subtitle: ({ days, amount, count }) => ({
       title: `Pay ${amount} now, repay later`,
-      count: `Across ${count} bills`,
+      count: `Across ${count} ${count === 1 ? 'bill' : 'bills'}`,
       lead: `Your next bill is due in`,
       days: `${days} days`,
     }),

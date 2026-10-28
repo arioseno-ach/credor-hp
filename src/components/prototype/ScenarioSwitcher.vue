@@ -2,12 +2,14 @@
 import { computed, ref } from 'vue'
 import { prototypeScenarios } from '@/lib/prototype/scenarios'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
+import { useAppView } from '@/composables/useAppView'
 import type { PrototypeStage } from '@/lib/prototype/types'
 
 const { state, scenario, showPartners, showTransactions, setStage, toggleModule } =
   usePrototypeState()
 
 const collapsed = ref(false)
+const { view } = useAppView()
 const chromeHidden =
   typeof window !== 'undefined' &&
   new URLSearchParams(window.location.search).get('chrome') === '0'
@@ -24,10 +26,26 @@ const activeStageLabel = computed(
 </script>
 
 <template>
-  <div v-if="!chromeHidden" class="scenario-bar" :class="{ 'scenario-bar--collapsed': collapsed }">
-    <div class="scenario-bar__group">
+  <aside
+    v-if="!chromeHidden"
+    class="scenario-bar"
+    :class="{ 'scenario-bar--collapsed': collapsed, 'scenario-bar--raised': view.name === 'apply' }"
+    aria-label="Prototype controls"
+  >
+    <div class="scenario-bar__header">
       <span class="scenario-bar__label">Prototype</span>
+      <span v-if="collapsed" class="scenario-bar__current">{{ activeStageLabel }}</span>
+      <button
+        type="button"
+        class="scenario-bar__collapse"
+        :aria-expanded="!collapsed"
+        @click="collapsed = !collapsed"
+      >
+        {{ collapsed ? 'Tampilkan' : 'Sembunyikan' }}
+      </button>
+    </div>
 
+    <template v-if="!collapsed">
       <div class="scenario-bar__stages" role="group" aria-label="Personalization stage">
         <button
           v-for="stage in stages"
@@ -42,70 +60,81 @@ const activeStageLabel = computed(
         </button>
       </div>
 
-      <label class="scenario-bar__toggle">
-        <input
-          type="checkbox"
-          :checked="showPartners"
-          @change="toggleModule('partners')"
-        />
-        <span>Partners</span>
-      </label>
+      <div class="scenario-bar__toggles">
+        <label class="scenario-bar__toggle">
+          <input
+            type="checkbox"
+            :checked="showPartners"
+            @change="toggleModule('partners')"
+          />
+          <span>Partners</span>
+        </label>
 
-      <label class="scenario-bar__toggle">
-        <input
-          type="checkbox"
-          :checked="showTransactions"
-          @change="toggleModule('transactions')"
-        />
-        <span>Transaksi</span>
-      </label>
-    </div>
+        <label class="scenario-bar__toggle">
+          <input
+            type="checkbox"
+            :checked="showTransactions"
+            @change="toggleModule('transactions')"
+          />
+          <span>Transaksi</span>
+        </label>
+      </div>
 
-    <p v-if="!collapsed" class="scenario-bar__description">{{ scenario.description }}</p>
-
-    <button
-      type="button"
-      class="scenario-bar__collapse"
-      :aria-expanded="!collapsed"
-      @click="collapsed = !collapsed"
-    >
-      {{ collapsed ? activeStageLabel : 'Sembunyikan' }}
-    </button>
+      <p class="scenario-bar__description">{{ scenario.description }}</p>
+    </template>
 
     <span class="sr-only">{{ prototypeScenarios.length }} preset scenario tersedia</span>
-  </div>
+  </aside>
 </template>
 
 <style scoped>
 .scenario-bar {
-  position: sticky;
-  z-index: 30;
-  top: 0;
+  position: fixed;
+  z-index: 50;
+  right: var(--primitives-padding-6);
+  bottom: var(--primitives-padding-6);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  width: 340px;
+  max-width: calc(100vw - 2 * var(--primitives-padding-4));
+  flex-direction: column;
   gap: var(--primitives-padding-3);
   box-sizing: border-box;
-  padding: var(--primitives-padding-2) var(--primitives-padding-6);
-  border-bottom: var(--primitives-border-width-default) solid
+  padding: var(--primitives-padding-3) var(--primitives-padding-4);
+  border: var(--primitives-border-width-default) solid
     var(--semantic-border-ach-color-border-default);
+  border-radius: var(--primitives-border-radius-lg);
   background: var(--semantic-bg-ach-color-bg-surface);
+  box-shadow:
+    calc(var(--primitives-shadows-lg-shadow-1-x) * 1px)
+      calc(var(--primitives-shadows-lg-shadow-1-y) * 1px)
+      calc(var(--primitives-shadows-lg-shadow-1-blur) * 1px)
+      calc(var(--primitives-shadows-lg-shadow-1-spread) * 1px)
+      var(--primitives-shadows-lg-color),
+    calc(var(--primitives-shadows-lg-shadow-2-x) * 1px)
+      calc(var(--primitives-shadows-lg-shadow-2-y) * 1px)
+      calc(var(--primitives-shadows-lg-shadow-2-blur) * 1px)
+      calc(var(--primitives-shadows-lg-shadow-2-spread) * 1px)
+      var(--primitives-shadows-lg-color);
   color: var(--semantic-text-ach-color-text-secondary);
   font-family: var(--primitives-font-families-body), sans-serif;
   font-size: var(--primitives-font-sizes-xs);
   line-height: var(--primitives-line-heights-2xs);
 }
 
-.scenario-bar--collapsed {
-  padding-block: var(--primitives-padding-1);
+/* Sits above the apply page's sticky action bar so it never covers Save & Continue. */
+.scenario-bar--raised {
+  bottom: calc(var(--primitives-padding-6) * 4);
 }
 
-.scenario-bar__group {
+.scenario-bar--collapsed {
+  width: auto;
+  padding-block: var(--primitives-padding-2);
+}
+
+.scenario-bar__header {
   display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--primitives-padding-3);
+  gap: var(--primitives-padding-2);
 }
 
 .scenario-bar__label {
@@ -117,8 +146,18 @@ const activeStageLabel = computed(
   white-space: nowrap;
 }
 
+.scenario-bar__current {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.scenario-bar__toggles {
+  display: flex;
+  gap: var(--primitives-padding-4);
+}
+
 .scenario-bar__stages {
-  display: inline-flex;
+  display: flex;
   padding: var(--primitives-padding-1);
   border-radius: var(--primitives-border-radius-md);
   background: var(--semantic-bg-ach-color-bg-surface-secondary);
@@ -134,6 +173,7 @@ const activeStageLabel = computed(
   cursor: pointer;
   font-family: inherit;
   font-size: var(--primitives-font-sizes-2xs);
+  flex: 1 1 0;
   font-weight: 500;
   line-height: var(--primitives-line-heights-4xs);
   white-space: nowrap;
@@ -166,14 +206,12 @@ const activeStageLabel = computed(
 
 .scenario-bar__description {
   margin: 0;
-  overflow: hidden;
   color: var(--semantic-text-ach-color-text-subtle);
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .scenario-bar__collapse {
   flex: 0 0 auto;
+  margin-left: auto;
   padding: 0 var(--primitives-padding-2);
   border: 0;
   border-radius: var(--primitives-border-radius-sm);
@@ -195,12 +233,10 @@ const activeStageLabel = computed(
   white-space: nowrap;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 640px) {
   .scenario-bar {
-    flex-wrap: wrap;
+    right: var(--primitives-padding-4);
+    bottom: var(--primitives-padding-4);
   }
-
-  .scenario-bar__description {
-    display: none;
-  }
-}</style>
+}
+</style>

@@ -4,6 +4,13 @@ import { useSegmentedIndicator } from '@/composables/useSegmentedIndicator'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { credorTransactionTabs, type CredorTransaction } from '@/components/credor/transactions'
+import { useAppView } from '@/composables/useAppView'
+import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
+
+const { openApply } = useAppView()
+const { state } = usePrototypeState()
+
+const isSubmitted = (id: string) => state.data.submittedInvoiceIds?.includes(id) ?? false
 
 const activeTabId = ref(credorTransactionTabs[0].id)
 
@@ -14,10 +21,15 @@ const activeTab = computed(
   () => credorTransactionTabs.find((tab) => tab.id === activeTabId.value) ?? credorTransactionTabs[0],
 )
 
-const readyCount = computed(() => activeTab.value.rows.length)
+/** Rows still open for financing. Submitted ones stay listed but leave the totals. */
+const openRows = computed(() =>
+  activeTab.value.rows.filter((row) => !isSubmitted(row.id)),
+)
+
+const readyCount = computed(() => openRows.value.length)
 
 const totalAmount = computed(() =>
-  activeTab.value.rows.reduce((total, row) => total + row.amount, 0),
+  openRows.value.reduce((total, row) => total + row.amount, 0),
 )
 
 const VISIBLE_ROWS = 3
@@ -42,7 +54,7 @@ const visibleRows = computed(() => sortedRows.value.slice(0, VISIBLE_ROWS))
 
 /** Longest cash-out period for sales, nearest upcoming due date for purchases. */
 const daysUntilDue = computed(() => {
-  const upcoming = activeTab.value.rows
+  const upcoming = openRows.value
     .map((row) => row.daysLeft)
     .filter((days) => days > 0)
 
@@ -78,7 +90,9 @@ const initials = (name: string) => {
   <section class="transactions" aria-labelledby="transactions-title">
     <div class="transactions__heading">
       <div class="transactions__intro">
-        <h2 id="transactions-title">{{ subtitle.title }}</h2>
+        <h2 id="transactions-title">
+          {{ readyCount > 0 ? subtitle.title : `All ${activeTab.itemLabel} are submitted for financing` }}
+        </h2>
       </div>
 
       <button v-if="sortedRows.length > VISIBLE_ROWS" type="button" class="transactions__view-all">
@@ -111,8 +125,10 @@ const initials = (name: string) => {
           </button>
         </div>
 
-        <p class="transactions__summary">
-          {{ subtitle.count }} · {{ subtitle.lead }} <strong>{{ subtitle.days }}</strong>
+        <p v-if="readyCount > 0" class="transactions__summary">
+          {{ subtitle.count }}<template v-if="daysUntilDue > 0">
+            · {{ subtitle.lead }} <strong>{{ subtitle.days }}</strong>
+          </template>
         </p>
       </div>
 
@@ -160,12 +176,16 @@ const initials = (name: string) => {
 
               <p class="transactions-card__amount">{{ formatAmount(row.amount) }}</p>
 
+              <span v-if="isSubmitted(row.id)" class="transactions-card__submitted">Submitted</span>
               <Button
+                v-else
                 variant="outline"
                 color="neutral"
                 size="small"
                 type="button"
                 class="transactions-card__action"
+                :aria-label="`${activeTab.actionLabel}: ${row.invoiceNumber}`"
+                @click="openApply(activeTab.id, row.id)"
               >
                 {{ activeTab.actionLabel }}
               </Button>
@@ -486,6 +506,19 @@ const initials = (name: string) => {
   background: transparent;
 }
 
+.transactions-card__submitted {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--primitives-border-radius-infinite);
+  background: var(--semantic-bg-ach-color-bg-surface-secondary);
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-xs);
+  font-weight: 500;
+  line-height: var(--primitives-line-heights-2xs);
+}
+
 .transactions__view-all {
   display: inline-flex;
   min-height: var(--primitives-padding-9);
@@ -525,9 +558,14 @@ const initials = (name: string) => {
     text-align: left;
   }
 
-  .transactions-card__action {
+  .transactions-card__action,
+  .transactions-card__submitted {
     grid-column: 3;
     width: auto;
+  }
+
+  .transactions-card__submitted {
+    padding: 0 var(--primitives-padding-3);
   }
 }
 </style>
