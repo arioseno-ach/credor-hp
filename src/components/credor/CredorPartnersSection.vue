@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
+import { useAppView } from '@/composables/useAppView'
 import { Avatar } from '@/components/ui/avatar'
 import { credorPartners } from '@/components/credor/partners'
 
@@ -19,6 +20,8 @@ const partners = computed(() => {
     .slice(0, VISIBLE_PARTNERS)
     .map((partner) => ({ ...partner, featured: partner.id === featuredId }))
 })
+
+const { openApply } = useAppView()
 </script>
 
 <template>
@@ -66,6 +69,8 @@ const partners = computed(() => {
             size="small"
             type="button"
             class="partner__action"
+            :aria-label="`Finance a new transaction with ${partner.name}`"
+            @click="openApply({ kind: 'partner', partnerId: partner.id })"
           >
             Finance a new Transaction
           </Button>

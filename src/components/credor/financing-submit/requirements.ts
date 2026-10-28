@@ -11,6 +11,15 @@ export interface FinancingProduct {
 export const financingProducts: Record<string, FinancingProduct> = {
   sales: { name: 'AR Invoice Financing', code: 'ARIF', needsPaymentAgreement: true },
   purchases: { name: 'AP Invoice Financing', code: 'APIF', needsPaymentAgreement: false },
+  'short-term': { name: 'Short Term Financing', code: 'STF', needsPaymentAgreement: false },
+}
+
+/** Product card id to the product key above, and the transactions tab its invoices come from.
+ *  Short Term picks from sales invoices, as staging lists invoices for it too. */
+export const productEntries: Record<string, { productKey: string; tabId: string }> = {
+  ar: { productKey: 'sales', tabId: 'sales' },
+  ap: { productKey: 'purchases', tabId: 'purchases' },
+  'short-term': { productKey: 'short-term', tabId: 'sales' },
 }
 
 export interface DocumentItem {
@@ -79,6 +88,32 @@ export const documentCategories: DocumentCategory[] = [
     ],
   },
 ]
+
+/** Short Term asks for fewer documents and no financial statements (from the staging checkout). */
+const shortTermDocumentIds = new Set([
+  'deed-board',
+  'deed-establishment',
+  'deed-amendment',
+  'sk-amendment',
+  'npwp-company',
+  'ktp',
+  'npwp-director',
+  'profile',
+  'nib',
+  'site-photo',
+  'logo',
+  'pse',
+])
+
+export function documentCategoriesFor(productKey: string): DocumentCategory[] {
+  if (productKey !== 'short-term') return documentCategories
+  return documentCategories
+    .map((category) => ({
+      ...category,
+      items: category.items.filter((item) => shortTermDocumentIds.has(item.id)),
+    }))
+    .filter((category) => category.items.length > 0)
+}
 
 const stageRank: Record<PrototypeStage, number> = { default: 0, personalising: 1, complete: 2 }
 

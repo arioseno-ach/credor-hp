@@ -172,6 +172,7 @@ function submit() {
           { label: 'Submission date', value: longDate },
         ],
         source: {
+          productKey: tab.value.id,
           tabId: tab.value.id,
           rowId: invoice.id,
           bankId: chosenBank,

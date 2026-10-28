@@ -40,7 +40,7 @@ function closeMobileNav() {
       <ScenarioSwitcher />
       <TopBar :menu-expanded="mobileNavOpen" @menu-click="toggleSidebar" />
       <main v-if="view.name === 'apply'" class="app-content">
-        <CredorFinancingApply :key="view.rowId" :tab-id="view.tabId" :row-id="view.rowId" />
+        <CredorFinancingApply :key="JSON.stringify(view.entry)" :entry="view.entry" />
       </main>
       <main v-else-if="view.name === 'application'" class="app-content">
         <CredorApplicationDetail

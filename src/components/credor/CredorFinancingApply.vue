@@ -1,37 +1,80 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { credorTransactionTabs } from '@/components/credor/transactions'
+import { Timeline, type TimelineItem } from '@/components/ui/timeline'
+import { credorTransactionTabs, type CredorTransaction } from '@/components/credor/transactions'
+import { credorPartners } from '@/components/credor/partners'
 import { verifiedCompany } from '@/components/credor/personalisation'
 import {
   bankAccounts,
   consentItems,
-  documentCategories,
+  documentCategoriesFor,
   financingProducts,
   isOnFile,
+  productEntries,
   type DocumentItem,
 } from '@/components/credor/financing-submit/requirements'
 import FinancingDocumentPreview from '@/components/credor/financing-submit/FinancingDocumentPreview.vue'
-import { useAppView } from '@/composables/useAppView'
+import { useAppView, type ApplyEntry } from '@/composables/useAppView'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 import { formatRupiah } from '@/lib/loan-calculator'
 
 const props = defineProps<{
-  tabId: string
-  rowId: string
+  entry: ApplyEntry
 }>()
 
 const { state, documentStage, submitApplication } = usePrototypeState()
 const { goHome, openApplication } = useAppView()
 
+/** Partners are buyers, so partner applications are AR. */
+const productKey = computed(() => {
+  if (props.entry.kind === 'invoice') return props.entry.tabId
+  if (props.entry.kind === 'partner') return 'sales'
+  return productEntries[props.entry.productId]?.productKey ?? 'sales'
+})
+const tabId = computed(() => {
+  if (props.entry.kind === 'invoice') return props.entry.tabId
+  if (props.entry.kind === 'partner') return 'sales'
+  return productEntries[props.entry.productId]?.tabId ?? 'sales'
+})
 const tab = computed(
-  () => credorTransactionTabs.find((item) => item.id === props.tabId) ?? credorTransactionTabs[0],
+  () => credorTransactionTabs.find((item) => item.id === tabId.value) ?? credorTransactionTabs[0],
 )
-const product = computed(() => financingProducts[tab.value.id] ?? financingProducts.sales)
-const row = computed(() => tab.value.rows.find((item) => item.id === props.rowId) ?? null)
+const product = computed(() => financingProducts[productKey.value] ?? financingProducts.sales)
+const partner = computed(() =>
+  props.entry.kind === 'partner'
+    ? (credorPartners.find((item) => item.id === (props.entry as { partnerId: string }).partnerId) ?? null)
+    : null,
+)
 const itemName = computed(() => tab.value.itemLabel.replace(/s$/, ''))
+const categories = computed(() => documentCategoriesFor(productKey.value))
+
+/** Invoices the user can pick: the partner's own, or every open one in the tab for a product card. */
+const candidates = computed<CredorTransaction[]>(() => {
+  const submitted = state.data.submittedInvoiceIds ?? []
+  const rows = partner.value ? partner.value.invoices : tab.value.rows
+  return rows
+    .filter((row) => !submitted.includes(row.id))
+    .sort((a, b) => a.dueOn.localeCompare(b.dueOn))
+})
+
+/** One invoice per application. Fixed from a table row; picked or skipped otherwise. */
+const selectedId = ref<string | null>(props.entry.kind === 'invoice' ? props.entry.rowId : null)
+const addLater = ref(false)
+const selectedInvoice = computed<CredorTransaction | null>(() => {
+  if (props.entry.kind === 'invoice') return tab.value.rows.find((row) => row.id === selectedId.value) ?? null
+  return candidates.value.find((row) => row.id === selectedId.value) ?? null
+})
+
+/** Partner picks first, since the partner already narrows the list. Product cards pick last,
+ *  as in the staging checkout. A table row needs no picking. */
+const invoiceStepPosition = computed<'start' | 'end' | null>(() => {
+  if (props.entry.kind === 'partner') return 'start'
+  if (props.entry.kind === 'product') return 'end'
+  return null
+})
 
 const uploadedIds = ref<string[]>([])
 const uploadingId = ref<string | null>(null)
@@ -49,39 +92,71 @@ let submitTimer: number | undefined
 const isReady = (item: DocumentItem) =>
   isOnFile(item, documentStage.value) || uploadedIds.value.includes(item.id)
 
-/** Same steps as the staging checkout: four document categories, then the bank account. */
-const steps = computed(() => [
-  ...documentCategories.map((category) => ({
+interface ApplyStep {
+  id: string
+  label: string
+  kind: 'documents' | 'bank' | 'invoice'
+  total: number
+  readyCount: number
+  complete: boolean
+}
+
+const steps = computed<ApplyStep[]>(() => {
+  const invoiceStep: ApplyStep = {
+    id: 'invoice',
+    label: tab.value.itemLabel === 'bills' ? 'Select bill' : 'Select invoice',
+    kind: 'invoice',
+    total: 0,
+    readyCount: 0,
+    complete: selectedId.value !== null || addLater.value,
+  }
+  const documentSteps: ApplyStep[] = categories.value.map((category) => ({
     id: category.id,
     label: category.label,
+    kind: 'documents',
     total: category.items.length,
     readyCount: category.items.filter(isReady).length,
     complete: category.items.every((item) => item.optional || isReady(item)),
-  })),
-  {
+  }))
+  const bankStep: ApplyStep = {
     id: 'bank',
     label: 'Disbursement account',
+    kind: 'bank',
     total: 0,
     readyCount: 0,
     complete: bankId.value !== null && consents.value.length === consentItems.length,
-  },
-])
+  }
+  return [
+    ...(invoiceStepPosition.value === 'start' ? [invoiceStep] : []),
+    ...documentSteps,
+    bankStep,
+    ...(invoiceStepPosition.value === 'end' ? [invoiceStep] : []),
+  ]
+})
 
-/** Prefilled demos start at Company verification so the user can click through every step.
+/** Prefilled demos start at the first step so the user can click through every step.
  *  Otherwise open on the first step that still needs work, like staging does. */
 const stepIndex = ref(
   state.prefilledDocuments ? 0 : Math.max(0, steps.value.findIndex((step) => !step.complete)),
 )
 const step = computed(() => steps.value[stepIndex.value])
-const category = computed(() => documentCategories.find((item) => item.id === step.value.id) ?? null)
+const category = computed(() => categories.value.find((item) => item.id === step.value.id) ?? null)
 const isLastStep = computed(() => stepIndex.value === steps.value.length - 1)
 const progress = computed(() =>
   Math.round((steps.value.filter((item) => item.complete).length / steps.value.length) * 100),
 )
 
+const timelineItems = computed<TimelineItem[]>(() =>
+  steps.value.map((item, index) => ({
+    id: item.id,
+    title: item.label,
+    status: index === stepIndex.value ? 'active' : item.complete ? 'success' : 'disabled',
+  })),
+)
+
 const missingTotal = computed(
   () =>
-    documentCategories
+    categories.value
       .flatMap((item) => item.items)
       .filter((item) => !item.optional && !isReady(item)).length,
 )
@@ -89,12 +164,17 @@ const missingTotal = computed(
 /** Why the primary action is disabled, shown next to it. Empty when the user can go on. */
 const blocker = computed(() => {
   if (uploadingId.value || replacingId.value) return 'Wait for the upload to finish'
-  if (!isLastStep.value && !step.value.complete) return 'Upload the required documents to continue'
+  if (step.value.kind === 'invoice' && !step.value.complete)
+    return `Choose ${itemName.value === 'bill' ? 'a bill' : 'an invoice'} or add it later`
+  if (step.value.kind === 'documents' && !step.value.complete)
+    return 'Upload the required documents to continue'
+  if (step.value.kind === 'bank' && !bankId.value) return 'Choose a disbursement account'
+  if (step.value.kind === 'bank' && consents.value.length < consentItems.length)
+    return 'Tick all consent boxes to continue'
   if (isLastStep.value && missingTotal.value > 0)
     return `${missingTotal.value} required ${missingTotal.value === 1 ? 'document is' : 'documents are'} still missing`
-  if (isLastStep.value && !bankId.value) return 'Choose a disbursement account'
-  if (isLastStep.value && consents.value.length < consentItems.length)
-    return 'Tick all consent boxes to submit'
+  if (isLastStep.value && steps.value.some((item) => !item.complete))
+    return 'Complete every step to submit'
   return ''
 })
 
@@ -118,6 +198,17 @@ async function goTo(index: number) {
   document.getElementById('apply-step-title')?.focus({ preventScroll: true })
 }
 
+function selectStep(id: string) {
+  if (submitting.value) return
+  const index = steps.value.findIndex((item) => item.id === id)
+  if (index >= 0) goTo(index)
+}
+
+function chooseInvoice(id: string | null) {
+  selectedId.value = id
+  addLater.value = id === null
+}
+
 function upload(item: DocumentItem) {
   if (uploadingId.value || replacingId.value) return
   uploadingId.value = item.id
@@ -126,7 +217,10 @@ function upload(item: DocumentItem) {
     uploadingId.value = null
     // The Upload button turns into the file row, so move focus to the next pending upload.
     await nextTick()
-    document.querySelector<HTMLElement>('.apply__upload')?.focus()
+    const nextTarget =
+      document.querySelector<HTMLElement>('.apply__upload') ??
+      document.querySelector<HTMLElement>(`[aria-label="Replace ${item.label}"]`)
+    nextTarget?.focus()
   }, 700)
 }
 
@@ -170,9 +264,9 @@ function next() {
 }
 
 function submit() {
-  const invoice = row.value
   const chosenBank = bankId.value
-  if (!invoice || !chosenBank) return
+  if (!chosenBank) return
+  const invoice = selectedInvoice.value
 
   submitting.value = true
   submitTimer = window.setTimeout(() => {
@@ -180,19 +274,19 @@ function submit() {
     const stamp = now.toISOString().slice(0, 10).replaceAll('-', '')
     const suffix = Math.random().toString(36).slice(2, 8).toUpperCase()
     const number = `${product.value.code}/${stamp}/${suffix}`
-    const invoiceNumber = invoice.invoiceNumber.replace('#', '')
+    const invoiceNumber = invoice?.invoiceNumber.replace('#', '') ?? ''
 
     submitApplication(
       {
         id: number,
         product: product.value.name,
-        amount: formatRupiah(invoice.amount),
+        amount: invoice ? formatRupiah(invoice.amount) : 'Not set',
         date: now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
-        note: `${invoiceNumber} attached`,
-        noteTone: 'default',
+        note: invoice ? `${invoiceNumber} attached` : 'No Invoice Selected',
+        noteTone: invoice ? 'default' : 'error',
         status: 'In Review',
         details: [
-          { label: 'Invoice', value: invoiceNumber },
+          { label: 'Invoice', value: invoice ? invoiceNumber : 'None selected' },
           { label: 'Payment Date', value: 'Still in review' },
           {
             label: 'Submission date',
@@ -200,15 +294,17 @@ function submit() {
           },
         ],
         source: {
+          productKey: productKey.value,
           tabId: tab.value.id,
-          rowId: invoice.id,
+          rowId: invoice?.id,
+          partnerId: partner.value?.id,
           bankId: chosenBank,
           submittedAt: now.toISOString(),
           uploadedIds: [...uploadedIds.value],
           replacedFiles: { ...replacedFiles.value },
         },
       },
-      [invoice.id],
+      invoice ? [invoice.id] : [],
     )
 
     submitting.value = false
@@ -216,6 +312,9 @@ function submit() {
     nextTick(() => document.getElementById('application-detail-title')?.focus())
   }, 900)
 }
+
+// Every entry button unmounts with the page it was on, so start focus on the step heading.
+onMounted(() => document.getElementById('apply-step-title')?.focus({ preventScroll: true }))
 
 onBeforeUnmount(() => {
   window.clearTimeout(uploadTimer)
@@ -226,9 +325,9 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="apply">
-    <button type="button" class="apply__back" @click="goHome()">
+    <button type="button" class="apply__back" :disabled="submitting" @click="goHome()">
       <span class="apply__back-icon" aria-hidden="true"></span>
-      Back
+      Back to Home
     </button>
 
     <div class="apply__layout">
@@ -252,45 +351,46 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <ol class="apply__steps">
-          <li v-for="(item, index) in steps" :key="item.id">
-            <button
-              type="button"
-              class="apply__step"
-              :class="{
-                'apply__step--current': index === stepIndex,
-                'apply__step--complete': item.complete,
-              }"
-              :aria-current="index === stepIndex ? 'step' : undefined"
-              @click="goTo(index)"
-            >
-              <span class="apply__step-icon" aria-hidden="true"></span>
-              {{ item.label }}
-              <span v-if="item.complete" class="apply__sr-only">(complete)</span>
-            </button>
-          </li>
-        </ol>
+        <Timeline class="apply__timeline" :items="timelineItems" interactive @select="selectStep" />
       </nav>
 
       <div class="apply__main">
-        <section v-if="row" class="apply__invoice" :aria-label="`${itemName} to finance`">
+        <section class="apply__invoice" :aria-label="`${product.name} application`">
           <span class="apply__eyebrow">{{ product.name }}</span>
-          <div class="apply__invoice-row">
-            <Avatar :initials="initials(row.counterparty)" />
+
+          <div v-if="partner" class="apply__invoice-row apply__invoice-row--partner">
+            <Avatar :initials="partner.initials" />
             <span class="apply__invoice-identity">
-              <span class="apply__invoice-counterparty">{{ row.counterparty }}</span>
-              <span class="apply__meta">{{ tab.counterpartyLabel }} · {{ row.invoiceNumber }}</span>
+              <span class="apply__invoice-counterparty">{{ partner.name }}</span>
+              <span class="apply__meta">
+                Verified partner · {{ partner.transactionCount }} transactions · avg {{ partner.averageTransaction }}
+              </span>
+            </span>
+          </div>
+
+          <div v-if="selectedInvoice" class="apply__invoice-row" :class="{ 'apply__invoice-row--nested': partner }">
+            <Avatar v-if="!partner" :initials="initials(selectedInvoice.counterparty)" />
+            <span class="apply__invoice-identity">
+              <span v-if="!partner" class="apply__invoice-counterparty">{{ selectedInvoice.counterparty }}</span>
+              <span class="apply__meta">
+                <template v-if="!partner">{{ tab.counterpartyLabel }} · </template>{{ selectedInvoice.invoiceNumber }}
+              </span>
             </span>
             <span class="apply__invoice-due">
-              <span class="apply__due-note" :class="{ 'apply__due-note--overdue': row.overdue }">
-                {{ row.dueNote }}
+              <span class="apply__due-note" :class="{ 'apply__due-note--overdue': selectedInvoice.overdue }">
+                {{ selectedInvoice.dueNote }}
               </span>
-              <span class="apply__meta">Due {{ row.dueDate }}</span>
+              <span class="apply__meta">Due {{ selectedInvoice.dueDate }}</span>
             </span>
-            <span class="apply__invoice-amount">{{ formatRupiah(row.amount) }}</span>
+            <span class="apply__invoice-amount">{{ formatRupiah(selectedInvoice.amount) }}</span>
           </div>
+
+          <p v-else-if="invoiceStepPosition" class="apply__meta apply__invoice-empty">
+            {{ addLater ? `No ${itemName} yet. You can add it from the application page.` : `No ${itemName} selected yet.` }}
+          </p>
+
           <p class="apply__invoice-note">
-            <template v-if="row.overdue">
+            <template v-if="selectedInvoice?.overdue">
               This {{ itemName }} is overdue, so lenders may decline it or offer different terms.
             </template>
             Lenders send offers with the financing amount, fees and terms after review.
@@ -308,7 +408,53 @@ onBeforeUnmount(() => {
           </span>
         </div>
 
-        <template v-if="category">
+        <template v-if="step.kind === 'invoice'">
+          <p class="apply__step-intro">
+            <template v-if="partner">Open {{ tab.itemLabel }} to {{ partner.name }}.</template>
+            <template v-else>Open {{ tab.itemLabel }} recorded in Achilles.</template>
+            Adding one now lets lenders review sooner.
+          </p>
+          <fieldset class="apply__choices">
+            <legend class="apply__sr-only">{{ step.label }}</legend>
+            <label
+              v-for="row in candidates"
+              :key="row.id"
+              class="apply__choice"
+              :class="{ 'apply__choice--selected': selectedId === row.id }"
+            >
+              <input
+                type="radio"
+                name="apply-invoice"
+                :checked="selectedId === row.id"
+                @change="chooseInvoice(row.id)"
+              />
+              <Avatar :initials="initials(row.counterparty)" />
+              <span class="apply__invoice-identity">
+                <span class="apply__choice-name">{{ row.counterparty }}</span>
+                <span class="apply__meta">{{ row.invoiceNumber }}</span>
+              </span>
+              <span class="apply__invoice-due">
+                <span class="apply__due-note" :class="{ 'apply__due-note--overdue': row.overdue }">
+                  {{ row.dueNote }}
+                </span>
+                <span class="apply__meta">Due {{ row.dueDate }}</span>
+              </span>
+              <span class="apply__choice-amount">{{ formatRupiah(row.amount) }}</span>
+            </label>
+            <p v-if="candidates.length === 0" class="apply__meta">
+              No open {{ tab.itemLabel }} right now.
+            </p>
+            <label class="apply__choice apply__choice--later" :class="{ 'apply__choice--selected': addLater }">
+              <input type="radio" name="apply-invoice" :checked="addLater" @change="chooseInvoice(null)" />
+              <span class="apply__invoice-identity">
+                <span class="apply__choice-name">Add {{ itemName }} later</span>
+                <span class="apply__meta">Submit now and add it from the application page.</span>
+              </span>
+            </label>
+          </fieldset>
+        </template>
+
+        <template v-else-if="category">
           <div v-if="category.id === 'company'" class="apply__company">
             <span class="apply__verified">
               <span class="apply__icon apply__icon--check" aria-hidden="true"></span>
@@ -464,6 +610,7 @@ onBeforeUnmount(() => {
 .apply {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
@@ -487,7 +634,12 @@ onBeforeUnmount(() => {
   line-height: var(--primitives-line-heights-sm);
 }
 
-.apply__back:hover {
+.apply__back:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.apply__back:hover:not(:disabled) {
   color: var(--semantic-text-ach-color-text-default);
 }
 
@@ -576,67 +728,21 @@ onBeforeUnmount(() => {
   line-height: var(--primitives-line-heights-2xs);
 }
 
-.apply__steps {
-  display: flex;
-  flex-direction: column;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.apply__step {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  gap: var(--primitives-padding-3);
-  padding: var(--primitives-padding-2) 0;
-  border: 0;
-  border-radius: var(--primitives-border-radius-xs);
-  background: none;
-  color: var(--semantic-text-ach-color-text-subtle);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--primitives-font-sizes-sm);
-  line-height: var(--primitives-line-heights-sm);
-  text-align: left;
-}
 
-.apply__step:hover {
-  color: var(--semantic-text-ach-color-text-default);
-}
 
-.apply__step--current {
-  color: var(--semantic-text-ach-color-text-default);
-  font-weight: 600;
-}
 
-.apply__step-icon {
-  width: 16px;
-  height: 16px;
-  flex: 0 0 16px;
-  border: var(--primitives-border-width-2) solid var(--semantic-border-ach-color-border-strong);
-  border-radius: var(--primitives-border-radius-infinite);
-}
 
-.apply__step--current .apply__step-icon {
-  border-color: var(--semantic-text-ach-color-text-link);
-  background: var(--semantic-text-ach-color-text-link);
-  box-shadow: inset 0 0 0 3px var(--semantic-bg-ach-color-bg-surface);
-}
 
-.apply__step--complete .apply__step-icon {
-  border: 0;
-  background: var(--semantic-icon-success-ach-color-icon-success);
-  box-shadow: none;
-  mask: url('/icons/ui-actions/check-circle.svg') center / contain no-repeat;
-  -webkit-mask: url('/icons/ui-actions/check-circle.svg') center / contain no-repeat;
-}
 
-.apply__step:focus-visible,
 .apply__icon-button:focus-visible,
 .apply__bank input:focus-visible {
   outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
   outline-offset: var(--primitives-border-width-2);
+}
+
+.apply__timeline {
+  padding: 0;
 }
 
 .apply__main {
@@ -702,6 +808,90 @@ onBeforeUnmount(() => {
   font-size: var(--primitives-font-sizes-md);
   font-weight: 600;
   line-height: var(--primitives-line-heights-md);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.apply__invoice-row--nested {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding-top: var(--primitives-padding-3);
+  border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+}
+
+.apply__invoice-empty {
+  margin: 0;
+}
+
+.apply__step-intro {
+  margin: 0;
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-sm);
+  line-height: var(--primitives-line-heights-sm);
+}
+
+.apply__choices {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  border: var(--primitives-border-width-default) solid var(--component-card-border);
+  border-radius: var(--primitives-border-radius-lg);
+  overflow: hidden;
+}
+
+.apply__choices > .apply__meta {
+  margin: 0;
+  padding: var(--primitives-padding-4);
+}
+
+.apply__choice {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto 128px;
+  align-items: center;
+  gap: var(--primitives-padding-3);
+  padding: var(--primitives-padding-3) var(--primitives-padding-4);
+  cursor: pointer;
+}
+
+.apply__choice + .apply__choice {
+  border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+}
+
+.apply__choice:hover {
+  background: var(--semantic-bg-ach-color-bg-surface-hover);
+}
+
+.apply__choice--selected {
+  background: var(--semantic-bg-ach-color-bg-surface-secondary);
+}
+
+.apply__choice--later {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.apply__choice input {
+  margin: 0;
+  accent-color: var(--semantic-text-ach-color-text-default);
+}
+
+.apply__choice input:focus-visible {
+  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline-offset: var(--primitives-border-width-2);
+}
+
+.apply__choice-name {
+  overflow: hidden;
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 500;
+  line-height: var(--primitives-line-heights-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.apply__choice-amount {
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
   text-align: right;
   white-space: nowrap;
@@ -1001,13 +1191,16 @@ onBeforeUnmount(() => {
 
 .apply__footer {
   position: sticky;
+  margin-top: auto;
   z-index: 10;
   bottom: 0;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: var(--primitives-padding-2);
-  margin: 0 calc(var(--primitives-padding-6) * -1) calc(var(--primitives-padding-6) * -1);
+  margin-right: calc(var(--primitives-padding-6) * -1);
+  margin-bottom: calc(var(--primitives-padding-6) * -1);
+  margin-left: calc(var(--primitives-padding-6) * -1);
   padding: var(--primitives-padding-4) var(--primitives-padding-6);
   border-top: var(--primitives-border-width-default) solid var(--component-card-border);
   background: var(--semantic-bg-ach-color-bg-surface);
@@ -1033,42 +1226,7 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 1180px) {
-  .apply__back {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: var(--primitives-padding-1);
-  margin-bottom: var(--primitives-padding-4);
-  padding: var(--primitives-padding-1) 0;
-  border: 0;
-  border-radius: var(--primitives-border-radius-xs);
-  background: none;
-  color: var(--semantic-text-ach-color-text-secondary);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--primitives-font-sizes-sm);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-sm);
-}
-
-.apply__back:hover {
-  color: var(--semantic-text-ach-color-text-default);
-}
-
-.apply__back:focus-visible {
-  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
-  outline-offset: var(--primitives-border-width-2);
-}
-
-.apply__back-icon {
-  width: 16px;
-  height: 16px;
-  background: currentColor;
-  mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
-  -webkit-mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
-}
-
-.apply__layout {
+  .apply__layout {
     grid-template-columns: 220px minmax(0, 1fr);
   }
 
@@ -1078,42 +1236,7 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 760px) {
-  .apply__back {
-  display: inline-flex;
-  align-self: flex-start;
-  align-items: center;
-  gap: var(--primitives-padding-1);
-  margin-bottom: var(--primitives-padding-4);
-  padding: var(--primitives-padding-1) 0;
-  border: 0;
-  border-radius: var(--primitives-border-radius-xs);
-  background: none;
-  color: var(--semantic-text-ach-color-text-secondary);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--primitives-font-sizes-sm);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-sm);
-}
-
-.apply__back:hover {
-  color: var(--semantic-text-ach-color-text-default);
-}
-
-.apply__back:focus-visible {
-  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
-  outline-offset: var(--primitives-border-width-2);
-}
-
-.apply__back-icon {
-  width: 16px;
-  height: 16px;
-  background: currentColor;
-  mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
-  -webkit-mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
-}
-
-.apply__layout {
+  .apply__layout {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -1121,7 +1244,7 @@ onBeforeUnmount(() => {
     position: static;
   }
 
-  .apply__steps {
+  .apply__timeline {
     display: none;
   }
 
@@ -1139,8 +1262,19 @@ onBeforeUnmount(() => {
     grid-row: 1;
   }
 
+  .apply__choice {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .apply__choice .avatar,
+  .apply__choice .apply__invoice-due {
+    display: none;
+  }
+
   .apply__footer {
-    margin: 0 calc(var(--primitives-padding-4) * -1) calc(var(--primitives-padding-4) * -1);
+    margin-right: calc(var(--primitives-padding-4) * -1);
+    margin-bottom: calc(var(--primitives-padding-4) * -1);
+    margin-left: calc(var(--primitives-padding-4) * -1);
     padding: var(--primitives-padding-3) var(--primitives-padding-4);
   }
 

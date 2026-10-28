@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { Alert } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Timeline, type TimelineItem } from '@/components/ui/timeline'
+import { credorPartners } from '@/components/credor/partners'
+import { findInvoice } from '@/components/credor/invoice-lookup'
 import { credorTransactionTabs } from '@/components/credor/transactions'
 import { bankAccounts, financingProducts } from '@/components/credor/financing-submit/requirements'
 import FinancingDocumentList from '@/components/credor/financing-submit/FinancingDocumentList.vue'
 import FinancingDocumentPreview from '@/components/credor/financing-submit/FinancingDocumentPreview.vue'
+import FinancingAddInvoiceDialog from '@/components/credor/financing-submit/FinancingAddInvoiceDialog.vue'
 import { useAppView } from '@/composables/useAppView'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 import { formatRupiah } from '@/lib/loan-calculator'
@@ -15,7 +19,7 @@ const props = defineProps<{
   justSubmitted: boolean
 }>()
 
-const { state, documentStage } = usePrototypeState()
+const { state, documentStage, attachInvoice } = usePrototypeState()
 const { goHome } = useAppView()
 
 const application = computed(
@@ -25,8 +29,42 @@ const source = computed(() => application.value?.source ?? null)
 const tab = computed(
   () => credorTransactionTabs.find((item) => item.id === source.value?.tabId) ?? credorTransactionTabs[0],
 )
-const invoice = computed(() => tab.value.rows.find((row) => row.id === source.value?.rowId) ?? null)
-const product = computed(() => financingProducts[tab.value.id] ?? financingProducts.sales)
+const invoice = computed(() => findInvoice(source.value?.rowId))
+const partner = computed(() => credorPartners.find((item) => item.id === source.value?.partnerId) ?? null)
+const product = computed(
+  () => financingProducts[source.value?.productKey ?? tab.value.id] ?? financingProducts.sales,
+)
+const itemTitle = computed(() => (tab.value.itemLabel === 'bills' ? 'Bill' : 'Invoice'))
+
+/** Open invoices this application can take: the partner's own, or every open one in its tab. */
+const candidates = computed(() => {
+  const submitted = state.data.submittedInvoiceIds ?? []
+  const rows = partner.value ? partner.value.invoices : tab.value.rows
+  return rows.filter((row) => !submitted.includes(row.id)).sort((a, b) => a.dueOn.localeCompare(b.dueOn))
+})
+
+const addInvoiceOpen = ref(false)
+const addInvoiceTrigger = ref<HTMLElement | null>(null)
+
+function openAddInvoice(event: MouseEvent) {
+  addInvoiceTrigger.value = event.currentTarget instanceof HTMLElement ? event.currentTarget : null
+  addInvoiceOpen.value = true
+}
+
+async function onAttach(id: string) {
+  const row = candidates.value.find((item) => item.id === id)
+  if (!row || !application.value) return
+  attachInvoice(application.value.id, {
+    id: row.id,
+    invoiceNumber: row.invoiceNumber,
+    amount: formatRupiah(row.amount),
+  })
+  // The Add button is gone once the invoice is attached, so land on the documents it brought.
+  await nextTick()
+  const heading = window.document.getElementById('supporting-docs-title')
+  heading?.setAttribute('tabindex', '-1')
+  heading?.focus()
+}
 const bank = computed(() => bankAccounts.find((account) => account.id === source.value?.bankId) ?? null)
 
 const submittedAt = computed(() => {
@@ -87,15 +125,23 @@ function onTabKeydown(event: KeyboardEvent) {
 
 onBeforeUnmount(() => window.clearTimeout(agreementTimer))
 
-const timeline = computed(() => [
-  { title: 'Application submitted', meta: submittedAt.value, done: true },
+const timeline = computed<TimelineItem[]>(() => [
+  { id: 'submitted', title: 'Application submitted', description: submittedAt.value, status: 'success' },
+  invoice.value
+    ? { id: 'invoice', title: `${itemTitle.value} attached`, description: invoiceNumber.value, status: 'success' }
+    : {
+        id: 'invoice',
+        title: `${itemTitle.value} not added yet`,
+        description: 'Add it to start lender review',
+        status: 'active',
+      },
   {
-    title: `${tab.value.itemLabel === 'bills' ? 'Bill' : 'Invoice'} attached`,
-    meta: invoiceNumber.value,
-    done: true,
+    id: 'review',
+    title: 'Sent to financing partners',
+    description: 'After document review',
+    status: invoice.value ? 'active' : 'disabled',
   },
-  { title: 'Sent to financing partners', meta: 'After document review', done: false },
-  { title: 'Offers received', meta: 'You choose one offer', done: false },
+  { id: 'offers', title: 'Offers received', description: 'You choose one offer', status: 'disabled' },
 ])
 </script>
 
@@ -178,20 +224,22 @@ const timeline = computed(() => [
                 </div>
                 <div>
                   <dt>{{ tab.counterpartyLabel }}</dt>
-                  <dd>{{ invoice?.counterparty }}</dd>
+                  <dd>{{ invoice?.counterparty ?? partner?.name ?? 'Not added yet' }}</dd>
                 </div>
                 <div>
                   <dt>{{ tab.itemLabel === 'bills' ? 'Bill number' : 'Invoice number' }}</dt>
-                  <dd>{{ invoiceNumber }}</dd>
+                  <dd :class="{ 'application-detail__pending': !invoice }">{{ invoiceNumber || 'Not added yet' }}</dd>
                 </div>
                 <div>
                   <dt>{{ tab.itemLabel === 'bills' ? 'Bill amount' : 'Invoice amount' }}</dt>
-                  <dd class="application-detail__amount">{{ invoice ? formatRupiah(invoice.amount) : '' }}</dd>
+                  <dd class="application-detail__amount" :class="{ 'application-detail__pending': !invoice }">
+                    {{ invoice ? formatRupiah(invoice.amount) : 'Not added yet' }}
+                  </dd>
                 </div>
                 <div>
                   <dt>Due date</dt>
-                  <dd>
-                    {{ invoice?.dueDate }}
+                  <dd :class="{ 'application-detail__pending': !invoice }">
+                    {{ invoice?.dueDate ?? 'Not added yet' }}
                     <span
                       class="application-detail__due-note"
                       :class="{ 'application-detail__due-note--overdue': invoice?.overdue }"
@@ -210,9 +258,29 @@ const timeline = computed(() => [
             <section class="application-detail__section" aria-labelledby="supporting-docs-title">
               <div class="application-detail__section-heading">
                 <h2 id="supporting-docs-title">Supporting documents</h2>
-                <p>Attached automatically from Transaction Hub.</p>
+                <p v-if="invoice">Attached automatically from Transaction Hub.</p>
+                <p v-else>Attached automatically once you add {{ itemTitle === 'Bill' ? 'a bill' : 'an invoice' }}.</p>
               </div>
-              <ul class="application-detail__docs">
+              <div v-if="!invoice" class="application-detail__add">
+                <span class="application-detail__doc-icon" aria-hidden="true"></span>
+                <span class="application-detail__doc-copy">
+                  <span class="application-detail__doc-label">No {{ itemTitle.toLowerCase() }} yet</span>
+                  <span class="application-detail__doc-file">
+                    Lenders start reviewing once {{ itemTitle === 'Bill' ? 'a bill' : 'an invoice' }} is attached.
+                  </span>
+                </span>
+                <Button
+                  variant="default"
+                  color="primary"
+                  size="small"
+                  type="button"
+                  class="application-detail__button"
+                  @click="openAddInvoice"
+                >
+                  Add {{ itemTitle.toLowerCase() }}
+                </Button>
+              </div>
+              <ul v-if="invoice" class="application-detail__docs">
                 <li v-for="document in supportingDocuments" :key="document.label" class="application-detail__doc">
                   <span class="application-detail__doc-icon" aria-hidden="true"></span>
                   <span class="application-detail__doc-copy">
@@ -330,25 +398,21 @@ const timeline = computed(() => [
           <div class="application-detail__card-header">
             <h2 id="timeline-title">Activity</h2>
           </div>
-          <ol class="application-detail__timeline">
-            <li
-              v-for="item in timeline"
-              :key="item.title"
-              class="application-detail__event"
-              :class="{ 'application-detail__event--pending': !item.done }"
-            >
-              <span class="application-detail__event-dot" aria-hidden="true"></span>
-              <span class="application-detail__event-copy">
-                <span class="application-detail__event-title">{{ item.title }}</span>
-                <span class="application-detail__event-meta">{{ item.meta }}</span>
-              </span>
-            </li>
-          </ol>
+          <Timeline :items="timeline" label="Application activity" />
         </section>
       </aside>
     </div>
 
     <p v-else class="application-detail__text">This application is no longer available.</p>
+
+    <FinancingAddInvoiceDialog
+      v-model:open="addInvoiceOpen"
+      :candidates="candidates"
+      :item-label="tab.itemLabel"
+      :partner-name="partner?.name"
+      :return-focus="addInvoiceTrigger"
+      @attach="onAttach"
+    />
 
     <FinancingDocumentPreview
       v-if="preview"
@@ -564,6 +628,15 @@ const timeline = computed(() => [
   border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
 }
 
+.application-detail__add {
+  display: flex;
+  align-items: center;
+  gap: var(--primitives-padding-3);
+  padding: var(--primitives-padding-4);
+  border: var(--primitives-border-width-default) dashed var(--semantic-border-ach-color-border-strong);
+  border-radius: var(--primitives-border-radius-lg);
+}
+
 .application-detail__doc-icon {
   width: 20px;
   height: 20px;
@@ -706,57 +779,13 @@ const timeline = computed(() => [
   border-radius: var(--primitives-border-radius-infinite);
 }
 
-.application-detail__timeline {
-  display: flex;
-  flex-direction: column;
-  gap: var(--primitives-padding-4);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
 
-.application-detail__event {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--primitives-padding-3);
-}
 
-.application-detail__event-dot {
-  width: 10px;
-  height: 10px;
-  flex: 0 0 10px;
-  margin-top: 5px;
-  border: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-default);
-  border-radius: var(--primitives-border-radius-infinite);
-  background: var(--semantic-text-ach-color-text-default);
-}
 
-.application-detail__event--pending .application-detail__event-dot {
-  border-color: var(--semantic-border-ach-color-border-strong);
-  background: none;
-}
 
-.application-detail__event-copy {
-  display: flex;
-  flex-direction: column;
-}
 
-.application-detail__event-title {
-  font-size: var(--primitives-font-sizes-sm);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-sm);
-}
 
-.application-detail__event--pending .application-detail__event-title {
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-weight: 400;
-}
 
-.application-detail__event-meta {
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-xs);
-  line-height: var(--primitives-line-heights-2xs);
-}
 
 @media (max-width: 1024px) {
   .application-detail__grid {

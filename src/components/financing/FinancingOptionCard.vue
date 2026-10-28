@@ -4,10 +4,13 @@ import { useElementSize } from '@vueuse/core'
 import { Button } from '@/components/ui/button'
 import FinancingOptionIllustration from '@/components/financing/FinancingOptionIllustration.vue'
 import type { FinancingOption } from '@/components/credor/financing-options'
+import { useAppView } from '@/composables/useAppView'
 
 const props = defineProps<{
   option: FinancingOption
 }>()
+
+const { openApply } = useAppView()
 
 const slotRef = ref<HTMLElement | null>(null)
 const { width } = useElementSize(slotRef)
@@ -43,6 +46,8 @@ const stageScale = computed(() => (width.value > 0 ? width.value / 720 : 0))
         size="default"
         type="button"
         class="financing-option__apply"
+        :aria-label="`Apply now for ${option.title}`"
+        @click="openApply({ kind: 'product', productId: option.id })"
       >
         Apply Now
       </Button>

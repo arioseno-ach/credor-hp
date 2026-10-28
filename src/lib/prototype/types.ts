@@ -22,8 +22,12 @@ export interface LoanApplication {
 }
 
 export interface ApplicationSource {
+  /** Product key in financing-submit/requirements.ts: sales, purchases or short-term. */
+  productKey: string
   tabId: string
-  rowId: string
+  /** The one invoice or bill in the application. Missing when it was left to add later. */
+  rowId?: string
+  partnerId?: string
   bankId: string
   submittedAt: string
   /** Company documents uploaded inside the submit sheet. */

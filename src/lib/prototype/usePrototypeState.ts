@@ -156,6 +156,30 @@ export function usePrototypeState() {
     syncStorage()
   }
 
+  /** Attaches the one invoice to an application that was submitted without it. */
+  function attachInvoice(
+    applicationId: string,
+    invoice: { id: string; invoiceNumber: string; amount: string },
+  ): void {
+    const number = invoice.invoiceNumber.replace('#', '')
+    state.data.applications = state.data.applications.map((item) =>
+      item.id === applicationId && item.source
+        ? {
+            ...item,
+            amount: invoice.amount,
+            note: `${number} attached`,
+            noteTone: 'default',
+            details: item.details.map((detail) =>
+              detail.label === 'Invoice' ? { ...detail, value: number } : detail,
+            ),
+            source: { ...item.source, rowId: invoice.id },
+          }
+        : item,
+    )
+    state.data.submittedInvoiceIds = [...new Set([...(state.data.submittedInvoiceIds ?? []), invoice.id])]
+    syncStorage()
+  }
+
   return {
     state,
     scenario,
@@ -171,5 +195,6 @@ export function usePrototypeState() {
     toggleModule,
     togglePrefilledDocuments,
     submitApplication,
+    attachInvoice,
   }
 }

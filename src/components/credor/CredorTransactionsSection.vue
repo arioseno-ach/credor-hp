@@ -185,7 +185,7 @@ const initials = (name: string) => {
                 type="button"
                 class="transactions-card__action"
                 :aria-label="`${activeTab.actionLabel}: ${row.invoiceNumber}`"
-                @click="openApply(activeTab.id, row.id)"
+                @click="openApply({ kind: 'invoice', tabId: activeTab.id, rowId: row.id })"
               >
                 {{ activeTab.actionLabel }}
               </Button>
