@@ -14,7 +14,8 @@ import {
 import PersonalisationCoretaxStep from './PersonalisationCoretaxStep.vue'
 import PersonalisationVerifyStep from './PersonalisationVerifyStep.vue'
 
-const { isOpen, step, open, close, goToCoretax } = usePersonalisationDrawer()
+const { isOpen, step, open, close, goToCoretax, takeAfterComplete, clearAfterComplete } =
+  usePersonalisationDrawer()
 const { setStage } = usePrototypeState()
 
 const npwp = ref('09.456.789.0-123.000')
@@ -66,12 +67,18 @@ function continueFlow() {
     return
   }
 
+  const next = takeAfterComplete()
   close()
   setStage('personalising')
+  next?.()
 }
 
 watch(isOpen, (value) => {
-  if (!value) reset()
+  if (!value) {
+    reset()
+    // Closed without completing: the follow-up no longer applies.
+    clearAfterComplete()
+  }
 })
 
 defineExpose({ open })
