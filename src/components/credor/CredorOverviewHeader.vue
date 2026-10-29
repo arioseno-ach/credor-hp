@@ -62,7 +62,7 @@ const incomingFundLabel = computed(() => formatAmount(state.data.incomingFund))
 .credor-overview {
   display: grid;
   width: 100%;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   column-gap: var(--primitives-padding-5);
   row-gap: var(--primitives-padding-6);
   align-items: end;
@@ -294,7 +294,7 @@ const incomingFundLabel = computed(() => formatAmount(state.data.incomingFund))
   color: var(--component-button-link-brand-text-hover);
 }
 
-@container app-workspace (max-width: 1120px) {
+@container app-workspace (max-width: 880px) {
   .credor-overview {
     grid-template-columns: minmax(0, 1fr);
   }

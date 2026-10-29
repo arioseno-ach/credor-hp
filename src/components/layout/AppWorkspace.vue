@@ -105,7 +105,7 @@ function closeMobileNav() {
 .credor-body {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
   gap: var(--primitives-padding-5);
 }
@@ -118,7 +118,7 @@ function closeMobileNav() {
   container-type: inline-size;
 }
 
-@container app-workspace (max-width: 1120px) {
+@container app-workspace (max-width: 880px) {
   .credor-body {
     grid-template-columns: minmax(0, 1fr);
   }
