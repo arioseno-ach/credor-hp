@@ -5,27 +5,12 @@ import { Button } from '@/components/ui/button'
 import FinancingOptionIllustration from '@/components/financing/FinancingOptionIllustration.vue'
 import type { FinancingOption } from '@/components/credor/financing-options'
 import { useAppView } from '@/composables/useAppView'
-import { usePersonalisationDrawer } from '@/composables/usePersonalisationDrawer'
-import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 
 const props = defineProps<{
   option: FinancingOption
 }>()
 
 const { openApply } = useAppView()
-const { open: openPersonalisation } = usePersonalisationDrawer()
-const { state } = usePrototypeState()
-
-/** Before personalisation, the general loan starts with the NPWP and Coretax drawer, like the
- *  banner offer does, and carries on to the apply page once the drawer is completed. */
-function apply() {
-  const entry = { kind: 'product', productId: props.option.id } as const
-  if (state.stage === 'default') {
-    openPersonalisation(() => openApply(entry))
-    return
-  }
-  openApply(entry)
-}
 
 const slotRef = ref<HTMLElement | null>(null)
 const { width } = useElementSize(slotRef)
@@ -62,7 +47,7 @@ const stageScale = computed(() => (width.value > 0 ? width.value / 720 : 0))
         type="button"
         class="financing-option__apply"
         :aria-label="`Apply now for ${option.title}`"
-        @click="apply()"
+        @click="openApply({ kind: 'product', productId: option.id })"
       >
         Apply Now
       </Button>

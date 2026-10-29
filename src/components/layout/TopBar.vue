@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import CommandSearch from '@/components/search/CommandSearch.vue'
+
 type Breakpoint = 'Web' | 'Tab' | 'Mobile'
 
 withDefaults(
@@ -49,6 +51,8 @@ const emit = defineEmits<{
         <img src="/icons/ui-actions/menu.svg" alt="" />
       </button>
 
+      <CommandSearch />
+
       <span class="topbar__spacer" aria-hidden="true"></span>
 
       <div v-if="actionTrail" class="topbar__action-trail">
@@ -64,15 +68,7 @@ const emit = defineEmits<{
         </slot>
       </div>
 
-      <div class="topbar__account" role="group" aria-label="Account">
-        <span class="topbar__avatar" aria-hidden="true">C</span>
-        <span class="topbar__account-name">CGI</span>
-        <img
-          class="topbar__account-chevron"
-          src="/icons/hardware/keyboard-arrow-down.svg"
-          alt=""
-        />
-      </div>
+      <span class="topbar__avatar" role="img" aria-label="Account">C</span>
     </div>
 
     <div v-if="bordered" class="topbar__divider" aria-hidden="true"></div>
@@ -124,8 +120,7 @@ const emit = defineEmits<{
   cursor: pointer;
 }
 
-.topbar__menu img,
-.topbar__account-chevron {
+.topbar__menu img {
   display: block;
 }
 
@@ -167,12 +162,6 @@ const emit = defineEmits<{
   height: var(--component-topbar-action-icon-size);
 }
 
-.topbar__account {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: var(--component-topbar-account-gap);
-}
 
 .topbar__avatar {
   box-sizing: border-box;
@@ -189,13 +178,6 @@ const emit = defineEmits<{
   line-height: var(--component-topbar-line-height);
 }
 
-.topbar__account-name {
-  color: var(--component-topbar-text);
-  font-size: var(--component-topbar-font-size);
-  font-weight: 500;
-  line-height: var(--component-topbar-line-height);
-  white-space: nowrap;
-}
 
 .topbar__divider {
   position: absolute;

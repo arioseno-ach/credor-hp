@@ -139,21 +139,6 @@ export const credorTransactionTabs: CredorTransactionTab[] = [
     }),
     rows: [
       {
-        id: 'bill-2026-0312',
-        counterparty: 'PT Semen Indonesia',
-        invoiceNumber: '#BILL-2026-0312',
-        dueDate: '16 Oct',
-        dueOn: '2026-10-16',
-        dueNote: 'Overdue 6 days',
-        daysLeft: -6,
-        overdue: true,
-        lineItems: [
-          { name: 'Semen Portland 50 kg', quantity: 800, unitPrice: 275000, total: 220000000 },
-          { name: 'Biaya angkut', quantity: 1, unitPrice: 45000000, total: 45000000 },
-        ],
-        amount: 265000000,
-      },
-      {
         id: 'bill-2026-0305',
         counterparty: 'PT Astra Logistik',
         invoiceNumber: '#BILL-2026-0305',

@@ -1,4 +1,6 @@
 import { nextTick, ref } from 'vue'
+import { usePersonalisationDrawer } from '@/composables/usePersonalisationDrawer'
+import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 
 /** Where an application starts: a transactions row, a partner card, or a product card. */
 export type ApplyEntry =
@@ -15,8 +17,16 @@ const view = ref<AppView>({ name: 'home' })
 
 /** Prototype-level navigation between the homepage and an application detail page. */
 export function useAppView() {
-  /** Full-page application, started from a transactions row, a partner, or a product card. */
+  const { state } = usePrototypeState()
+  const { open: openPersonalisation } = usePersonalisationDrawer()
+
+  /** Full-page application, started from a transactions row, a partner, a product card or search.
+   *  Before personalisation, a product (general loan) goes through the NPWP and Coretax drawer first. */
   function openApply(entry: ApplyEntry) {
+    if (entry.kind === 'product' && state.stage === 'default') {
+      openPersonalisation(() => openApply(entry))
+      return
+    }
     view.value = { name: 'apply', entry }
     window.scrollTo({ top: 0 })
   }

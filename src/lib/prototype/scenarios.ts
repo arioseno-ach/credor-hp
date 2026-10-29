@@ -76,8 +76,6 @@ export const prototypeScenarios: PrototypeScenario[] = [
         balance: 1000000000,
         incomingFund: 150000000,
         applications: completeApplications,
-        // The seeded AP application already carries this bill.
-        submittedInvoiceIds: ['bill-2026-0312'],
         bcaFeed: {
           title: 'BCA Reconciliation',
           subtitle: 'Pickup Sabtu, 31 Okt 2026',
@@ -105,8 +103,6 @@ export const prototypeScenarios: PrototypeScenario[] = [
         balance: 1000000000,
         incomingFund: 150000000,
         applications: completeApplications,
-        // The seeded AP application already carries this bill.
-        submittedInvoiceIds: ['bill-2026-0312'],
         bcaFeed: {
           title: 'BCA Reconciliation',
           subtitle: 'Pickup Sabtu, 31 Okt 2026',
