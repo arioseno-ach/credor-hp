@@ -27,6 +27,11 @@ const props = defineProps<{
 }>()
 
 const { state, documentStage, submitApplication } = usePrototypeState()
+
+/** Resuming personalisation starts from the Default documents, even with prefilled documents on. */
+const fileStage = computed(() =>
+  props.entry.kind === 'product' && props.entry.resume ? 'default' : documentStage.value,
+)
 const { goHome, openApplication } = useAppView()
 
 /** Partners are buyers, so partner applications are AR. */
@@ -86,7 +91,7 @@ const uploadedIds = ref<string[]>([])
 const uploadingId = ref<string | null>(null)
 const replacedFiles = ref<Record<string, string>>({})
 const replacingId = ref<string | null>(null)
-const bankId = ref<string | null>(documentStage.value === 'complete' ? bankAccounts[0].id : null)
+const bankId = ref<string | null>(fileStage.value === 'complete' ? bankAccounts[0].id : null)
 const consents = ref<string[]>([])
 const submitting = ref(false)
 const preview = ref<{ label: string; fileName: string; trigger: HTMLElement | null } | null>(null)
@@ -96,7 +101,7 @@ let replaceTimer: number | undefined
 let submitTimer: number | undefined
 
 const isReady = (item: DocumentItem) =>
-  isOnFile(item, documentStage.value) || uploadedIds.value.includes(item.id)
+  isOnFile(item, fileStage.value) || uploadedIds.value.includes(item.id)
 
 interface ApplyStep {
   id: string

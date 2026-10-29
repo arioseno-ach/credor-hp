@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Alert } from '@/components/ui/alert'
+import { useAppView } from '@/composables/useAppView'
+
+const { openApply } = useAppView()
 </script>
 
 <template>
@@ -12,7 +15,11 @@ import { Alert } from '@/components/ui/alert'
     :dismissible="false"
   >
     <template #action>
-      <button type="button" class="personalisation-alert__action">
+      <button
+        type="button"
+        class="personalisation-alert__action"
+        @click="openApply({ kind: 'product', productId: 'ar', resume: true })"
+      >
         Resume Application
         <span class="personalisation-alert__action-icon" aria-hidden="true"></span>
       </button>

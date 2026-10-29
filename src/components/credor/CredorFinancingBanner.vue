@@ -90,6 +90,7 @@ function onFocusOut(event: FocusEvent) {
         @click="openPersonalisation()"
       >
         Get Financing Solution Now
+        <span class="credor-financing-banner__cta-arrow" aria-hidden="true"></span>
       </button>
       <p class="credor-financing-banner__compliance">
         All financing partners are licensed and supervised by OJK.
@@ -255,8 +256,8 @@ function onFocusOut(event: FocusEvent) {
   justify-content: center;
   border-radius: var(--primitives-border-radius-infinite);
   padding: var(--primitives-padding-2) var(--primitives-padding-4);
-  background: var(--semantic-bg-ach-color-bg-inverse);
-  color: var(--semantic-text-ach-color-text-inverse);
+  background: var(--semantic-bg-ach-color-bg-surface);
+  color: var(--component-button-solid-primary-bg);
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 600;
   line-height: var(--primitives-line-heights-3xs);
@@ -270,12 +271,41 @@ function onFocusOut(event: FocusEvent) {
     color 150ms ease;
 }
 
+/* Collapsed until hover or focus, so the label does not shift at rest. */
+.credor-financing-banner__cta-arrow {
+  width: 0;
+  height: 16px;
+  background: currentColor;
+  mask: url('/icons/ui-actions/arrow-forward.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/arrow-forward.svg') center / contain no-repeat;
+  opacity: 0;
+  transform: translateX(calc(var(--primitives-padding-2) * -1));
+  transition:
+    width var(--primitives-motion-duration-base) var(--primitives-motion-easing-emphasized),
+    margin-left var(--primitives-motion-duration-base) var(--primitives-motion-easing-emphasized),
+    opacity var(--primitives-motion-duration-base) var(--primitives-motion-easing-emphasized),
+    transform var(--primitives-motion-duration-base) var(--primitives-motion-easing-emphasized);
+}
+
+.credor-financing-banner__cta:is(:hover, :focus-visible) .credor-financing-banner__cta-arrow {
+  width: 16px;
+  margin-left: var(--primitives-padding-2);
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .credor-financing-banner__cta-arrow {
+    transition: none;
+  }
+}
+
 .credor-financing-banner__cta:hover {
-  background: var(--semantic-border-ach-color-border-inverse);
+  background: var(--semantic-bg-ach-color-bg-surface-hover);
 }
 
 .credor-financing-banner__cta:focus-visible {
-  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-inverse);
+  outline: var(--primitives-border-width-2) solid var(--semantic-bg-ach-color-bg-surface);
   outline-offset: var(--primitives-border-width-2);
 }
 

@@ -6,7 +6,8 @@ import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 export type ApplyEntry =
   | { kind: 'invoice'; tabId: string; rowId: string }
   | { kind: 'partner'; partnerId: string }
-  | { kind: 'product'; productId: string }
+  /** `resume` continues an in-progress personalisation: only the NPWP is on file so far. */
+  | { kind: 'product'; productId: string; resume?: boolean }
 
 export type AppView =
   | { name: 'home' }
