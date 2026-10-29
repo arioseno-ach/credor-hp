@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@fontsource-variable/lexend':
+      '@fontsource-variable/inter':
         specifier: ^5.3.0
         version: 5.3.0
       '@tailwindcss/vite':
@@ -88,8 +88,8 @@ packages:
     peerDependencies:
       vue: '>=3.3.0'
 
-  '@fontsource-variable/lexend@5.3.0':
-    resolution: {integrity: sha512-3SXtiZ8rFbT0oaPzEboCG5RM3jtyhpNxandh1jWNLqvrJRfV/eP3R+GGw+o5e3hS1uqmAGutKxSvaWG5oyrimA==}
+  '@fontsource-variable/inter@5.3.0':
+    resolution: {integrity: sha512-OupL48va4JNofb97w6NYeF9S7W/kHNKM0Er8Dem5nqi4jeOLrVJDoE8tZEpnMJmtkvNbB1EIPPwHcdkF6b1oUA==}
 
   '@internationalized/date@3.12.4':
     resolution: {integrity: sha512-M1dEn4c1U1HsSlaVR8upZtSqvXrTkHDfv18H01uCSJyjVLDxnBR38v/fMxecmlwXKR4i9HeZcmgQAPE6A+aGJQ==}
@@ -888,7 +888,7 @@ snapshots:
       '@floating-ui/utils': 0.2.12
       vue: 3.5.43(typescript@6.0.3)
 
-  '@fontsource-variable/lexend@5.3.0': {}
+  '@fontsource-variable/inter@5.3.0': {}
 
   '@internationalized/date@3.12.4':
     dependencies:

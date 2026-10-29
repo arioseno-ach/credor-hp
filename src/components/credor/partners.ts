@@ -37,18 +37,6 @@ export const credorPartners: CredorPartner[] = [
         lineItems: [{ name: 'Jasa pengiriman kontainer', quantity: 1, unitPrice: 1450000000, total: 1450000000 }],
         amount: 1450000000,
       },
-      {
-        id: 'inv-sl-0398',
-        counterparty: 'PT Sumber Logistik Makmur Bersama',
-        invoiceNumber: '#INV-2026-0398',
-        dueDate: '19 Oct',
-        dueOn: '2026-10-19',
-        dueNote: 'Overdue 3 days',
-        daysLeft: -3,
-        overdue: true,
-        lineItems: [{ name: 'Sewa armada truk', quantity: 1, unitPrice: 620000000, total: 620000000 }],
-        amount: 620000000,
-      },
     ],
   },
   {

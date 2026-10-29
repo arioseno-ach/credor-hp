@@ -63,37 +63,6 @@ export const credorTransactionTabs: CredorTransactionTab[] = [
     }),
     rows: [
       {
-        id: 'inv-2026-0149',
-        counterparty: 'PT Pelindo Petikemas',
-        invoiceNumber: '#INV-2026-0149',
-        dueDate: '13 Oct',
-        dueOn: '2026-10-13',
-        dueNote: 'Overdue 9 days',
-        daysLeft: -9,
-        overdue: true,
-        lineItems: [
-          { name: 'Jasa bongkar muat kontainer', quantity: 120, unitPrice: 2350000, total: 282000000 },
-          { name: 'Biaya penumpukan kontainer', quantity: 1, unitPrice: 38500000, total: 38500000 },
-        ],
-        amount: 320500000,
-      },
-      {
-        id: 'inv-2026-0157',
-        counterparty: 'PT Wijaya Karya Beton',
-        invoiceNumber: '#INV-2026-0157',
-        dueDate: '16 Oct',
-        dueOn: '2026-10-16',
-        dueNote: 'Overdue 6 days',
-        daysLeft: -6,
-        overdue: true,
-        lineItems: [
-          { name: 'Jasa instalasi perangkat', quantity: 3, unitPrice: 45000000, total: 135000000 },
-          { name: 'Perangkat keras', quantity: 12, unitPrice: 15000000, total: 180000000 },
-          { name: 'Dukungan teknis 12 bulan', quantity: 1, unitPrice: 60000000, total: 60000000 },
-        ],
-        amount: 375000000,
-      },
-      {
         id: 'inv-2026-0162',
         counterparty: 'PT Semen Baturaja',
         invoiceNumber: '#INV-2026-0162',

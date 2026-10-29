@@ -18,7 +18,6 @@ const incomingFundLabel = computed(() => formatAmount(state.data.incomingFund))
       <img class="credor-overview__logo" src="/logo/logo-credor-lockup-full-color-24px.svg" alt="Credor" />
       <div class="credor-overview__copy">
         <h1 id="credor-overview-title">Financing &amp; risk solutions</h1>
-        <p>Manage your finances more efficiently and monitor business risk.</p>
       </div>
     </div>
 

@@ -69,9 +69,14 @@ const selectedInvoice = computed<CredorTransaction | null>(() => {
   return candidates.value.find((row) => row.id === selectedId.value) ?? null
 })
 
+/** For now the invoice is added after submitting, from the detail page (filtered to the partner
+ *  for partner applications). Set to true to bring the in-form pick back. */
+const INVOICE_STEP_IN_FORM = false
+
 /** Partner picks first, since the partner already narrows the list. Product cards pick last,
  *  as in the staging checkout. A table row needs no picking. */
 const invoiceStepPosition = computed<'start' | 'end' | null>(() => {
+  if (!INVOICE_STEP_IN_FORM) return null
   if (props.entry.kind === 'partner') return 'start'
   if (props.entry.kind === 'product') return 'end'
   return null

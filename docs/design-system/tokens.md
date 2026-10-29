@@ -12,7 +12,7 @@ Keep references flowing from primitives → semantic → components. Add raw val
 
 ## Tailwind and shadcn-vue
 
-`semantic.css` exposes shadcn-vue's standard color names as aliases to ACH semantic tokens and maps colors, spacing, radius, and the default sans-serif font to Tailwind v4 utilities with `@theme inline`. The default font uses `--primitives-font-families-body`, which must match the family name registered by Fontsource (`Lexend Variable`). Existing ACH token names remain available. Sidebar utility colors are mapped in `components.css` to the existing Sidebar component tokens. The current bridge is light-theme only; add a dark palette only when its design values are available.
+`semantic.css` exposes shadcn-vue's standard color names as aliases to ACH semantic tokens and maps colors, spacing, radius, and the default sans-serif font to Tailwind v4 utilities with `@theme inline`. The default font uses `--primitives-font-families-body`, which must match the family name registered by Fontsource (`Inter Variable`). Existing ACH token names remain available. Sidebar utility colors are mapped in `components.css` to the existing Sidebar component tokens. The current bridge is light-theme only; add a dark palette only when its design values are available.
 
 ## Sidebar compatibility
 

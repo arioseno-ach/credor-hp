@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import '@fontsource-variable/lexend'
+import '@fontsource-variable/inter'
 import './index.css'
 import App from './App.vue'
 
