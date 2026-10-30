@@ -25,7 +25,7 @@ const companySwitcher = ref<HTMLDetailsElement | null>(null)
 const { state, toggleSidebar } = useSidebar()
 
 const platformItems: SidebarItem[] = [
-  { label: 'Document', icon: '/icons/text-formatting/description.svg' },
+  { label: 'Document', icon: '/icons/custom/invoice.svg' },
   { label: 'Sales Transaction', icon: '/icons/custom/e-faktur.svg' },
   { label: 'Purchase Transaction', icon: '/icons/business-payments/receipt-long.svg' },
 ]
@@ -224,7 +224,8 @@ function closeCompanySwitcher() {
 
 .ach-sidebar__header {
   gap: 0;
-  padding-block: var(--primitives-padding-4);
+  padding-top: var(--primitives-padding-3);
+  padding-bottom: var(--primitives-padding-4);
   padding-inline: var(--primitives-padding-2);
 }
 
@@ -236,14 +237,14 @@ function closeCompanySwitcher() {
 .ach-sidebar__company {
   box-sizing: border-box;
   display: flex;
-  min-height: 78px;
+  min-height: 76px;
   align-items: flex-start;
   gap: var(--primitives-padding-3);
   padding: var(--primitives-padding-2);
   border: var(--primitives-border-width-default) solid var(--component-sidebar-profile-border);
-  border-radius: var(--primitives-border-radius-sm);
+  border-radius: var(--primitives-border-radius-md);
   background: var(--component-sidebar-profile-background);
-  box-shadow: 0 1px 2px var(--primitives-shadows-xs-color);
+  box-shadow: 0 1px 1px var(--primitives-shadows-xs-color);
   color: var(--component-sidebar-profile-text);
   cursor: pointer;
   list-style: none;
@@ -297,20 +298,21 @@ function closeCompanySwitcher() {
 
 .ach-sidebar__badge {
   align-self: flex-start;
-  padding: var(--primitives-padding-1) var(--primitives-padding-2);
+  padding: calc(var(--primitives-padding-1) / 2) var(--primitives-padding-2);
   border-radius: var(--primitives-border-radius-sm);
   background: var(--sidebar-badge-background);
   color: var(--sidebar-badge-text);
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 500;
-  line-height: var(--primitives-line-heights-xs);
+  line-height: var(--primitives-line-heights-3xs);
 }
 
 .ach-sidebar__company-id {
   color: var(--component-sidebar-profile-text-secondary);
   font-size: var(--primitives-font-sizes-2xs);
+  font-family: var(--primitives-font-families-display);
   font-weight: 500;
-  line-height: var(--primitives-line-heights-2xs);
+  line-height: var(--primitives-line-heights-4xs);
 }
 
 .ach-sidebar__company-chevron,
@@ -389,9 +391,10 @@ function closeCompanySwitcher() {
   height: var(--primitives-padding-7);
   padding-inline: var(--primitives-padding-3);
   color: var(--component-sidebar-group-label-text);
-  font-size: var(--primitives-font-sizes-xs);
+  font-size: var(--primitives-font-sizes-2xs);
   font-weight: 500;
-  line-height: var(--primitives-line-heights-xs);
+  line-height: var(--primitives-line-heights-4xs);
+  letter-spacing: var(--primitives-letter-spacing-wider);
   text-transform: uppercase;
 }
 
@@ -418,26 +421,29 @@ function closeCompanySwitcher() {
 }
 
 :global(.ach-sidebar .ach-sidebar__product-button) {
-  height: 50px;
-  min-height: 50px;
+  height: 48px;
+  min-height: 48px;
+  gap: var(--primitives-padding-3);
   padding-block: var(--primitives-padding-2);
 }
 
 .ach-sidebar__product-mark {
   display: grid;
-  width: var(--primitives-padding-6);
-  height: var(--primitives-padding-6);
-  flex: 0 0 var(--primitives-padding-6);
+  box-sizing: border-box;
+  width: var(--primitives-padding-8);
+  height: var(--primitives-padding-8);
+  flex: 0 0 var(--primitives-padding-8);
   place-items: center;
   overflow: hidden;
-  border-radius: var(--primitives-border-radius-sm);
+  padding: var(--primitives-padding-1);
+  border-radius: var(--primitives-border-radius-infinite);
   background: var(--avatar-logo-background);
 }
 
 .ach-sidebar__product-mark img {
   display: block;
-  width: var(--primitives-padding-4);
-  height: var(--primitives-padding-4);
+  max-width: var(--primitives-padding-6);
+  max-height: var(--primitives-padding-6);
   object-fit: contain;
   filter: brightness(0) invert(1);
 }
@@ -446,13 +452,22 @@ function closeCompanySwitcher() {
   color: var(--component-sidebar-item-secondary);
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 400;
-  line-height: var(--primitives-line-heights-xs);
+  line-height: var(--primitives-line-heights-3xs);
+  letter-spacing: var(--primitives-letter-spacing-wide);
 }
 
 .ach-sidebar__footer {
   gap: 0;
-  padding-block: var(--primitives-padding-4);
+  padding-block: var(--primitives-padding-3);
   padding-inline: var(--primitives-padding-2);
+}
+
+:global(.ach-sidebar__product-button[data-active="true"]) {
+  border-radius: var(--primitives-border-radius-md);
+}
+
+:global(.ach-sidebar__product-button[data-active="true"] .ach-sidebar__item-label) {
+  font-weight: 500;
 }
 
 .ach-sidebar__trailing-icon {

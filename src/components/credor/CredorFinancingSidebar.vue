@@ -36,13 +36,13 @@ const { share } = useShareLink()
 
     <section class="contact-card" aria-label="Contact and sharing options">
       <div class="contact-card__row">
-        <img src="/icons/communications/forum.svg" alt="" aria-hidden="true" />
+        <span class="contact-card__icon contact-card__icon--forum" aria-hidden="true"></span>
         <strong>Need help?</strong>
         <span class="sidebar-link">Contact Us</span>
       </div>
       <div class="contact-card__row">
-        <img src="/icons/others/share-reviews.svg" alt="" aria-hidden="true" />
-        <strong>Your team may find this useful?</strong>
+        <span class="contact-card__icon contact-card__icon--share" aria-hidden="true"></span>
+        <strong>Share offers with your team</strong>
         <button type="button" class="sidebar-link sidebar-link--button" @click="share">
           Share Offers
         </button>
@@ -55,7 +55,7 @@ const { share } = useShareLink()
 .financing-sidebar {
   display: grid;
   min-width: 0;
-  gap: var(--primitives-padding-5);
+  gap: var(--primitives-padding-6);
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
 }
@@ -128,10 +128,25 @@ const { share } = useShareLink()
 }
 
 .simulation-card__heading > img,
-.contact-card__row > img {
+.contact-card__icon {
   width: var(--primitives-padding-5);
   height: var(--primitives-padding-5);
   flex: 0 0 var(--primitives-padding-5);
+}
+
+.contact-card__icon {
+  display: block;
+  background-color: var(--semantic-icon-ach-color-icon-subtle);
+}
+
+.contact-card__icon--forum {
+  mask: url('/icons/communications/forum.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/communications/forum.svg') center / contain no-repeat;
+}
+
+.contact-card__icon--share {
+  mask: url('/icons/others/share-reviews.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/others/share-reviews.svg') center / contain no-repeat;
 }
 
 .simulation-card__heading h2 {
@@ -226,8 +241,7 @@ const { share } = useShareLink()
 
 .contact-card {
   display: grid;
-  min-height: 98px;
-  grid-template-rows: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, auto);
 }
 
 .contact-card__row {
@@ -235,11 +249,12 @@ const { share } = useShareLink()
   min-width: 0;
   align-items: center;
   gap: var(--primitives-padding-3);
+  padding-block: var(--primitives-padding-3);
   padding-inline: var(--primitives-padding-4);
 }
 
 .contact-card__row + .contact-card__row {
-  border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-default);
+  border-top: var(--primitives-border-width-default) solid var(--component-card-border);
 }
 
 .contact-card__row strong {
@@ -248,11 +263,13 @@ const { share } = useShareLink()
   color: var(--semantic-text-ach-color-text-secondary);
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 400;
-  line-height: var(--primitives-line-heights-xs);
+  line-height: var(--primitives-line-heights-2xs);
 }
 
 .contact-card__row .sidebar-link {
   font-size: var(--primitives-font-sizes-xs);
+  font-weight: 400;
+  line-height: var(--primitives-line-heights-2xs);
 }
 
 @container app-workspace (max-width: 680px) {

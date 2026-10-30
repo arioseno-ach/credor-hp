@@ -111,13 +111,14 @@ function closeMobileNav() {
   min-width: 0;
   grid-template-columns: minmax(0, 1fr) 320px;
   align-items: start;
-  gap: var(--primitives-padding-5);
+  row-gap: var(--primitives-padding-5);
+  column-gap: var(--primitives-padding-6);
 }
 
 .credor-body__main {
   display: grid;
   min-width: 0;
-  gap: var(--primitives-padding-5);
+  gap: var(--primitives-padding-6);
   container-name: credor-main;
   container-type: inline-size;
 }

@@ -149,11 +149,18 @@ const initials = (name: string) => {
               class="transactions-card"
               :class="{ 'transactions-card--items': SHOW_LINE_ITEMS }"
             >
-              <Avatar :initials="initials(row.counterparty)" :label="row.counterparty" />
+              <div class="transactions-card__company">
+                <Avatar
+                  :initials="initials(row.counterparty)"
+                  verified
+                  variant="inverse"
+                  :label="`${row.counterparty}, verified partner`"
+                />
 
-              <div class="transactions-card__identity">
-                <p class="transactions-card__counterparty">{{ row.counterparty }}</p>
-                <a class="transactions-card__invoice" href="#">{{ row.invoiceNumber }}</a>
+                <div class="transactions-card__identity">
+                  <p class="transactions-card__counterparty">{{ row.counterparty }}</p>
+                  <a class="transactions-card__invoice" href="#">{{ row.invoiceNumber }}</a>
+                </div>
               </div>
 
               <p v-if="SHOW_LINE_ITEMS" class="transactions-card__items">
@@ -166,11 +173,6 @@ const initials = (name: string) => {
               </p>
 
               <div class="transactions-card__due">
-                <span
-                  class="transactions-card__due-dot"
-                  :class="{ 'transactions-card__due-dot--overdue': row.overdue }"
-                  aria-hidden="true"
-                ></span>
                 <div>
                   <p
                     class="transactions-card__due-note"
@@ -254,7 +256,7 @@ const initials = (name: string) => {
 .transactions__panel {
   min-width: 0;
   overflow: hidden;
-  border: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-default);
+  border: var(--primitives-border-width-default) solid var(--component-card-border);
   border-radius: var(--primitives-border-radius-lg);
   background: var(--semantic-bg-ach-color-bg-surface);
 }
@@ -372,41 +374,38 @@ const initials = (name: string) => {
   }
 }
 
-/* One row anatomy: fixed columns keep avatar, items, due, amount and action aligned row to row. */
+/* Company profile flexes while due date, amount and action keep their intrinsic widths. */
 .transactions__rows {
   min-width: 0;
-  padding-bottom: var(--primitives-padding-1);
 }
 
 .transactions-card {
   display: grid;
   min-width: 0;
-  grid-template-columns: auto minmax(0, 1fr) 124px 128px 116px;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
-  gap: var(--primitives-padding-3);
+  column-gap: var(--primitives-padding-4);
   padding: var(--primitives-padding-4);
+  border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
 }
 
 .transactions-card--items {
-  grid-template-columns: auto minmax(0, 1.5fr) minmax(0, 1fr) 124px 128px 116px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto auto auto;
+}
+
+.transactions-card:last-child {
+  border-bottom: 0;
 }
 
 .transactions-card:hover {
   background: var(--semantic-bg-ach-color-bg-surface-hover);
 }
 
-/* Divider starts under the text, past the 48px avatar, and runs to the list's right edge. */
-.transactions-card {
-  position: relative;
-}
-
-.transactions-card + .transactions-card::before {
-  position: absolute;
-  top: 0;
-  right: 0;
-  left: calc(var(--primitives-padding-4) + 48px + var(--primitives-padding-3));
-  border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
-  content: '';
+.transactions-card__company {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--primitives-padding-3);
 }
 
 .transactions-card__identity {
@@ -436,8 +435,8 @@ const initials = (name: string) => {
 .transactions-card__invoice {
   overflow: hidden;
   color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-xs);
-  line-height: var(--primitives-line-heights-2xs);
+  font-size: var(--primitives-font-sizes-sm);
+  line-height: var(--primitives-line-heights-sm);
   text-overflow: ellipsis;
   text-decoration: none;
   white-space: nowrap;
@@ -472,25 +471,13 @@ const initials = (name: string) => {
   display: flex;
   align-items: flex-start;
   gap: var(--primitives-padding-2);
-}
-
-.transactions-card__due-dot {
-  width: 6px;
-  height: 6px;
-  flex: 0 0 6px;
-  margin-top: 7px;
-  border-radius: var(--primitives-border-radius-infinite);
-  background: var(--semantic-text-ach-color-text-disabled);
-}
-
-.transactions-card__due-dot--overdue {
-  background: var(--semantic-fg-error-ach-color-fg-error);
+  white-space: nowrap;
 }
 
 .transactions-card__due-note {
   color: var(--semantic-text-ach-color-text-default);
   font-size: var(--primitives-font-sizes-sm);
-  font-weight: 500;
+  font-weight: 400;
   line-height: var(--primitives-line-heights-sm);
   white-space: nowrap;
 }
@@ -516,9 +503,10 @@ const initials = (name: string) => {
   white-space: nowrap;
 }
 
-.transactions-card__action {
-  width: 100%;
-  background: transparent;
+.transactions-card__action.ach-button--outlined.ach-button--color-neutral {
+  flex: 0 0 auto;
+  border-color: var(--component-card-border);
+  border-radius: var(--primitives-border-radius-infinite);
 }
 
 .transactions-card__submitted {
@@ -559,23 +547,35 @@ const initials = (name: string) => {
 
 @media (max-width: 900px) {
   .transactions-card {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto;
     row-gap: var(--primitives-padding-2);
   }
 
-  .transactions-card__items,
+  .transactions-card__company {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
   .transactions-card__due {
-    grid-column: 2 / -1;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .transactions-card__items {
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 
   .transactions-card__amount {
     grid-column: 2;
-    text-align: left;
+    grid-row: 2;
+    text-align: right;
   }
 
   .transactions-card__action,
   .transactions-card__submitted {
-    grid-column: 3;
+    grid-column: 2;
+    grid-row: 1;
     width: auto;
   }
 

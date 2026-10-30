@@ -5,7 +5,7 @@ import { useAppView } from '@/composables/useAppView'
 import { Avatar } from '@/components/ui/avatar'
 import { credorPartners } from '@/components/credor/partners'
 
-/** The partner with the most transactions and the largest average transaction is highlighted. */
+/** The highest-activity partner stays first and carries the active-partner badge. */
 const VISIBLE_PARTNERS = 4
 
 const partners = computed(() => {
@@ -46,6 +46,7 @@ const { openApply } = useAppView()
           <Avatar
             :initials="partner.initials"
             verified
+            variant="inverse"
             :label="`${partner.name}, verified partner`"
           />
 
@@ -141,7 +142,7 @@ const { openApply } = useAppView()
   display: grid;
   min-width: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--primitives-padding-3);
+  gap: var(--primitives-padding-4);
 }
 
 .partner {
@@ -149,11 +150,11 @@ const { openApply } = useAppView()
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--primitives-padding-4);
+  gap: var(--primitives-padding-3);
   overflow: hidden;
-  /* Top padding clears the flush tag so every card's content starts at the same height. */
+  /* Keep the Figma 24px top inset consistent across partner cards. */
   padding: var(--primitives-padding-6) var(--primitives-padding-4) var(--primitives-padding-4);
-  border: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-default);
+  border: var(--primitives-border-width-default) solid var(--component-card-border);
   border-radius: var(--primitives-border-radius-lg);
   background: var(--semantic-bg-ach-color-bg-surface);
 }
@@ -161,7 +162,7 @@ const { openApply } = useAppView()
 .partner__identity {
   display: flex;
   min-width: 0;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--primitives-padding-3);
 }
 
@@ -179,14 +180,14 @@ const { openApply } = useAppView()
 }
 
 .partner__name {
-  display: -webkit-box;
+  display: block;
   overflow: hidden;
   color: var(--semantic-text-ach-color-text-default);
   font-size: var(--primitives-font-sizes-md);
   font-weight: 500;
   line-height: var(--primitives-line-heights-md);
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .partner__meta {
@@ -198,7 +199,7 @@ const { openApply } = useAppView()
   white-space: nowrap;
 }
 
-/* A factual label, not an approval claim. Flush with the card's top right corner. */
+/* The first card carries the factual activity badge shown in the design. */
 .partners__badge {
   display: inline-flex;
   height: 24px;
@@ -226,7 +227,7 @@ const { openApply } = useAppView()
   justify-content: space-between;
   gap: var(--primitives-padding-3);
   margin-top: auto;
-  padding-top: var(--primitives-padding-4);
+  padding-top: var(--primitives-padding-3);
   border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
 }
 
@@ -253,9 +254,9 @@ const { openApply } = useAppView()
   white-space: nowrap;
 }
 
-.partner__action {
+.partner__action.ach-button--outlined.ach-button--color-neutral {
   flex: 0 0 auto;
-  background: transparent;
+  border-color: var(--component-card-border);
 }
 
 .partner__action:focus-visible {

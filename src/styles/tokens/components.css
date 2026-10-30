@@ -101,7 +101,7 @@
   --component-table-cell-divider: var(--semantic-border-ach-color-border-subtle);
 
   /* card */
-  --component-card-border: var(--semantic-border-ach-color-border-default);
+  --component-card-border: var(--semantic-border-ach-color-border-subtle);
 
   /* drawer */
   --component-drawer-background: var(--component-card-background);
@@ -138,7 +138,7 @@
 
   /* loan simulation card */
   --component-loan-simulation-background: var(--component-card-background);
-  --component-loan-simulation-border: var(--semantic-border-ach-color-border-default);
+  --component-loan-simulation-border: var(--semantic-border-ach-color-border-subtle);
   --component-loan-simulation-radius: var(--primitives-border-radius-lg);
   --component-loan-simulation-icon-color: var(--semantic-brand-ach-color-brand-default);
   --component-loan-simulation-dot: var(--semantic-bg-ach-color-bg-illustration-dot);
@@ -825,7 +825,7 @@
 
   /* sidebar */
   --component-sidebar-background: var(--semantic-bg-ach-color-bg-surface);
-  --component-sidebar-border: var(--semantic-border-ach-color-border-default);
+  --component-sidebar-border: var(--semantic-border-ach-color-border-subtle);
   --component-sidebar-item-text: var(--semantic-text-ach-color-text-default);
   --component-sidebar-item-icon: var(--semantic-icon-ach-color-icon-default);
   --component-sidebar-item-background-hover: var(--semantic-bg-ach-color-bg-surface-hover);

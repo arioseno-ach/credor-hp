@@ -1,22 +1,25 @@
 <script setup lang="ts">
-defineProps<{
+const props = withDefaults(defineProps<{
   initials: string
   verified?: boolean
   label?: string
-}>()
+  variant?: 'default' | 'inverse'
+}>(), {
+  variant: 'default',
+})
 </script>
 
 <template>
-  <span class="avatar">
-    <span class="avatar__initials">{{ initials }}</span>
+  <span class="avatar" :class="{ 'avatar--inverse': props.variant === 'inverse' }">
+    <span class="avatar__initials">{{ props.initials }}</span>
     <img
-      v-if="verified"
+      v-if="props.verified"
       class="avatar__verified"
       src="/icons/common-actions/verified-filled.svg"
       alt=""
       aria-hidden="true"
     />
-    <span v-if="label" class="sr-only">{{ label }}</span>
+    <span v-if="props.label" class="sr-only">{{ props.label }}</span>
   </span>
 </template>
 
@@ -49,6 +52,20 @@ defineProps<{
   display: block;
   width: 20px;
   height: 20px;
+}
+
+.avatar--inverse {
+  border: 0;
+  background: var(--avatar-initials-background);
+  color: var(--avatar-initials-text);
+  font-family: var(--primitives-font-families-body), sans-serif;
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 500;
+  letter-spacing: var(--primitives-letter-spacing-wide);
+}
+
+.avatar--inverse .avatar__initials {
+  line-height: var(--primitives-line-heights-xs);
 }
 
 .sr-only {

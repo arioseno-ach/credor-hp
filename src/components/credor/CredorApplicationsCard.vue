@@ -95,28 +95,35 @@ function toggleApplication(id: string): void {
           Open Settings
         </span>
 
-        <div v-if="feedExpanded" class="applications-card__feed-details">
-          <div class="applications-card__detail-list">
-            <div
-              v-for="detail in feed.details"
-              :key="detail.label"
-              class="applications-card__detail"
-            >
-              <span class="applications-card__detail-label">{{ detail.label }}</span>
-              <span class="applications-card__detail-value">{{ detail.value }}</span>
+        <Transition name="applications-expand">
+          <div
+            v-if="feedExpanded"
+            class="applications-card__details-transition"
+          >
+            <div class="applications-card__feed-details">
+              <div class="applications-card__detail-list">
+                <div
+                  v-for="detail in feed.details"
+                  :key="detail.label"
+                  class="applications-card__detail"
+                >
+                  <span class="applications-card__detail-label">{{ detail.label }}</span>
+                  <span class="applications-card__detail-value">{{ detail.value }}</span>
+                </div>
+              </div>
+              <div class="applications-card__actions">
+                <Button
+                  type="button"
+                  size="small"
+                  color="inverse"
+                  class="applications-card__expanded-button"
+                >
+                  Open Settings
+                </Button>
+              </div>
             </div>
           </div>
-          <div class="applications-card__actions">
-            <Button
-              type="button"
-              size="small"
-              color="inverse"
-              class="applications-card__expanded-button"
-            >
-              Open Settings
-            </Button>
-          </div>
-        </div>
+        </Transition>
       </div>
 
       <div v-if="visibleApplications.length > 0" class="applications-card__table">
@@ -175,31 +182,38 @@ function toggleApplication(id: string): void {
             Add Invoice
           </span>
 
-          <div v-if="expandedApplicationId === application.id" class="applications-card__row-details">
-            <div class="applications-card__detail-list">
-              <div
-                v-for="detail in application.details"
-                :key="detail.label"
-                class="applications-card__detail"
-              >
-                <span class="applications-card__detail-label">{{ detail.label }}</span>
-                <span class="applications-card__detail-value">{{ detail.value }}</span>
+          <Transition name="applications-expand">
+            <div
+              v-if="expandedApplicationId === application.id"
+              class="applications-card__details-transition"
+            >
+              <div class="applications-card__row-details">
+                <div class="applications-card__detail-list">
+                  <div
+                    v-for="detail in application.details"
+                    :key="detail.label"
+                    class="applications-card__detail"
+                  >
+                    <span class="applications-card__detail-label">{{ detail.label }}</span>
+                    <span class="applications-card__detail-value">{{ detail.value }}</span>
+                  </div>
+                </div>
+                <div class="applications-card__actions">
+                  <Button
+                    type="button"
+                    size="small"
+                    color="inverse"
+                    class="applications-card__expanded-button"
+                  >
+                    <template #leadingIcon>
+                      <span class="applications-card__button-icon" aria-hidden="true"></span>
+                    </template>
+                    Add Invoice
+                  </Button>
+                </div>
               </div>
             </div>
-            <div class="applications-card__actions">
-              <Button
-                type="button"
-                size="small"
-                color="inverse"
-                class="applications-card__expanded-button"
-              >
-                <template #leadingIcon>
-                  <span class="applications-card__button-icon" aria-hidden="true"></span>
-                </template>
-                Add Invoice
-              </Button>
-            </div>
-          </div>
+          </Transition>
         </div>
       </div>
     </template>
@@ -302,7 +316,7 @@ function toggleApplication(id: string): void {
 }
 
 .applications-card__feed.is-expanded {
-  background: var(--semantic-bg-ach-color-bg-canvas);
+  background: var(--semantic-brand-ach-color-brand-subtle);
 }
 
 .applications-card__feed-header {
@@ -524,12 +538,42 @@ function toggleApplication(id: string): void {
 
 .applications-card__row {
   position: relative;
+  transition: background-color 180ms ease-out;
   border-bottom: var(--primitives-border-width-default) solid
     var(--semantic-border-ach-color-border-default);
 }
 
+.applications-card__row:last-child {
+  border-bottom: 0;
+}
+
 .applications-card__row.is-expanded {
   background: var(--semantic-bg-ach-color-bg-canvas);
+}
+
+.applications-card__details-transition {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.applications-card__details-transition > .applications-card__feed-details,
+.applications-card__details-transition > .applications-card__row-details {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.applications-expand-enter-active,
+.applications-expand-leave-active {
+  opacity: 1;
+  transition:
+    grid-template-rows 180ms ease-out,
+    opacity 150ms ease-out;
+}
+
+.applications-expand-enter-from,
+.applications-expand-leave-to {
+  grid-template-rows: 0fr;
+  opacity: 0;
 }
 
 .applications-card__row-main {
@@ -583,5 +627,13 @@ function toggleApplication(id: string): void {
 
 .applications-card__row-note.is-error {
   color: var(--semantic-text-error-ach-color-text-error-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .applications-card__row,
+  .applications-expand-enter-active,
+  .applications-expand-leave-active {
+    transition: none;
+  }
 }
 </style>

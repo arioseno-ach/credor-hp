@@ -143,7 +143,7 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
     <div v-if="variant === 'unsync'" class="risk-card__cta">
       <Button
         variant="outline"
-        color="primary"
+        color="neutral"
         size="small"
         type="button"
         class="risk-card__cta-button"
@@ -172,6 +172,10 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
   text-align: center;
+}
+
+.risk-card--synced {
+  padding-bottom: 0;
 }
 
 .risk-card__header {
@@ -306,11 +310,12 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
 }
 
 .risk-card__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: var(--primitives-padding-1) var(--primitives-padding-4);
+  display: grid;
+  width: calc(100% + var(--primitives-padding-4) + var(--primitives-padding-4));
+  margin-inline: calc(-1 * var(--primitives-padding-4));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+  border-top: var(--primitives-border-width-default) solid var(--component-card-border);
 }
 
 .risk-card__range,
@@ -371,10 +376,12 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
 
 .risk-card__report {
   display: inline-flex;
+  width: 100%;
+  min-width: 0;
   align-items: center;
   justify-content: center;
   gap: var(--primitives-padding-1);
-  padding: 0;
+  padding: var(--primitives-padding-2) var(--primitives-padding-1);
   border: 0;
   background: none;
   color: var(--semantic-text-ach-color-text-link);
@@ -384,6 +391,10 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   font-weight: 500;
   line-height: var(--primitives-line-heights-2xs);
   text-decoration: none;
+}
+
+.risk-card__report + .risk-card__report {
+  border-left: var(--primitives-border-width-default) solid var(--component-card-border);
 }
 
 .risk-card__sr-only {
@@ -420,13 +431,10 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   justify-content: center;
 }
 
-.risk-card__cta-button {
+.risk-card__cta-button.ach-button--outlined.ach-button--color-neutral {
   width: 100%;
-  box-shadow:
-    calc(var(--primitives-shadows-xs-x) * 1px)
-      calc(var(--primitives-shadows-xs-y) * 1px)
-      calc(var(--primitives-shadows-xs-blur) * 1px)
-      var(--primitives-shadows-xs-color);
+  border-color: var(--component-card-border);
+  border-radius: var(--primitives-border-radius-infinite);
 }
 
 .risk-card__cta-arrow {
