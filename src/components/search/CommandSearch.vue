@@ -173,10 +173,11 @@ const keepFocus = (event: Event) => event.preventDefault()
     aria-haspopup="dialog"
     :aria-expanded="searchOpen"
     :aria-keyshortcuts="isMac ? 'Meta+K' : 'Control+K'"
+    aria-label="Search products"
     @click="openSearch(trigger)"
   >
     <span class="search-trigger__icon" aria-hidden="true"></span>
-    <span class="search-trigger__label">Search</span>
+    <span class="search-trigger__label">Search products</span>
     <kbd class="search-trigger__hint" aria-hidden="true">{{ shortcutHint }}</kbd>
   </button>
 
@@ -237,6 +238,7 @@ const keepFocus = (event: Event) => event.preventDefault()
 
 <style scoped>
 .search-trigger {
+  box-sizing: border-box;
   display: flex;
   width: 256px;
   min-width: 0;
@@ -244,10 +246,10 @@ const keepFocus = (event: Event) => event.preventDefault()
   align-items: center;
   gap: var(--primitives-padding-2);
   padding: 0 var(--primitives-padding-3);
-  border: var(--primitives-border-width-default) solid transparent;
-  border-radius: var(--primitives-border-radius-md);
+  border: 0;
+  border-radius: var(--primitives-border-radius-infinite);
   background: var(--semantic-bg-ach-color-bg-surface-secondary);
-  color: var(--semantic-text-ach-color-text-secondary);
+  color: var(--component-input-placeholder);
   cursor: pointer;
   font-family: inherit;
   font-size: var(--primitives-font-sizes-sm);
@@ -255,33 +257,54 @@ const keepFocus = (event: Event) => event.preventDefault()
 }
 
 .search-trigger:hover {
-  border-color: var(--semantic-border-ach-color-border-default);
+  background: var(--semantic-bg-ach-color-bg-surface-hover);
+}
+
+.search-trigger:active {
+  background: var(--semantic-bg-ach-color-bg-surface-active);
 }
 
 .search-trigger:focus-visible {
-  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline: var(--primitives-border-width-2) solid var(--component-input-border-focus);
   outline-offset: var(--primitives-border-width-2);
 }
 
 .search-trigger__icon,
 .search-dialog__icon {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
-  background: var(--semantic-icon-ach-color-icon-default);
   mask: url('/icons/ui-actions/search.svg') center / contain no-repeat;
   -webkit-mask: url('/icons/ui-actions/search.svg') center / contain no-repeat;
 }
 
+.search-trigger__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background: var(--semantic-icon-ach-color-icon-subtle);
+}
+
+.search-dialog__icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  background: var(--semantic-icon-ach-color-icon-default);
+}
+
 .search-trigger__label {
-  flex: 1;
+  overflow: hidden;
+  flex: 1 1 auto;
+  color: var(--component-input-placeholder);
+  font-weight: 400;
   text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .search-trigger__hint {
+  flex: 0 0 auto;
   padding: 0 var(--primitives-padding-1);
   border: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
   border-radius: var(--primitives-border-radius-xs);
+  color: var(--semantic-text-ach-color-text-secondary);
   font-family: inherit;
   font-size: var(--primitives-font-sizes-xs);
   line-height: var(--primitives-line-heights-2xs);

@@ -65,7 +65,7 @@ const incomingFundLabel = computed(() => formatAmount(state.data.incomingFund))
   grid-template-columns: minmax(0, 1fr) 320px;
   column-gap: var(--primitives-padding-5);
   row-gap: var(--primitives-padding-6);
-  align-items: end;
+  align-items: center;
 }
 
 .credor-overview__intro {
