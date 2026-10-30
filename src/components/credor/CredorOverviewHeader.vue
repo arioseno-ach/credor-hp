@@ -39,9 +39,6 @@ const incomingFundLabel = computed(() => formatAmount(state.data.incomingFund))
 
         <Button v-if="hasBalance" class="balance-card__disburse" type="button" size="mini" color="inverse">
           Disburse Money
-          <template #trailingIcon>
-            <span class="balance-card__arrow" aria-hidden="true"></span>
-          </template>
         </Button>
       </div>
 
@@ -195,15 +192,6 @@ const incomingFundLabel = computed(() => formatAmount(state.data.incomingFund))
   background: var(--semantic-brand-ach-color-brand-default);
   mask: url('/icons/business-payments/wallet.svg') center / contain no-repeat;
   -webkit-mask: url('/icons/business-payments/wallet.svg') center / contain no-repeat;
-}
-
-.balance-card__arrow {
-  display: block;
-  width: var(--primitives-padding-3);
-  height: var(--primitives-padding-3);
-  background: var(--semantic-text-ach-color-text-default);
-  mask: url('/icons/ui-actions/chevron-right.svg') center / contain no-repeat;
-  -webkit-mask: url('/icons/ui-actions/chevron-right.svg') center / contain no-repeat;
 }
 
 .balance-card__amount {
