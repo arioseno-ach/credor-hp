@@ -13,6 +13,7 @@ export type AppView =
   | { name: 'home' }
   | { name: 'apply'; entry: ApplyEntry }
   | { name: 'application'; id: string; justSubmitted: boolean }
+  | { name: 'risk-pulse' }
 
 const view = ref<AppView>({ name: 'home' })
 
@@ -37,11 +38,23 @@ export function useAppView() {
     window.scrollTo({ top: 0 })
   }
 
-  async function goHome() {
+  function openRiskPulse() {
+    view.value = { name: 'risk-pulse' }
+    window.scrollTo({ top: 0 })
+  }
+
+  /** `focusId` names the control that opened the page we are leaving; it gets focus back when it exists. */
+  async function goHome(focusId?: string) {
     view.value = { name: 'home' }
     window.scrollTo({ top: 0 })
-    // The Back button unmounts with the detail page, so focus a homepage heading instead.
+    // The Back button unmounts with the detail page, so focus the opener or a homepage heading instead.
     await nextTick()
+    const opener = focusId ? document.getElementById(focusId) : null
+    if (opener) {
+      // Scroll allowed: at narrow widths the card sits below the main column.
+      opener.focus()
+      return
+    }
     const heading =
       document.getElementById('transactions-title') ??
       document.getElementById('recent-applications-title')
@@ -49,5 +62,5 @@ export function useAppView() {
     heading?.focus({ preventScroll: true })
   }
 
-  return { view, openApply, openApplication, goHome }
+  return { view, openApply, openApplication, openRiskPulse, goHome }
 }

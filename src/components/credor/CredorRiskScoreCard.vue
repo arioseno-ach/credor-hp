@@ -1,38 +1,38 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
+import RiskBandChip from '@/components/credor/risk-pulse/RiskBandChip.vue'
+import { useAppView } from '@/composables/useAppView'
 import { useCompanyHealthDialog } from '@/composables/useCompanyHealthDialog'
 import type { HealthVariant } from '@/lib/prototype/types'
+import {
+  RISK_SCORE_MAX,
+  RISK_SCORE_MIN,
+  formatScore,
+  riskBands,
+  riskPulseReport,
+  riskPulseUpdatedAt,
+  scoreRatio,
+} from '@/lib/risk-pulse'
 
 const { open: openCompanyHealthDialog } = useCompanyHealthDialog()
+const { openRiskPulse } = useAppView()
 
-/** Prototype report with dummy data in the Risk Pulse v5 format. */
+/** Prototype report built from the same Risk Pulse preview as the details page (1–5 scale). */
 const reportUrl = `${import.meta.env.BASE_URL}reports/risk-pulse-report-demo.html`
 
 const props = withDefaults(
   defineProps<{
     variant?: HealthVariant
     score?: number
-    minScore?: number
-    maxScore?: number
     updatedAt?: string
   }>(),
   {
     variant: 'unsync',
-    score: 69,
-    minScore: 0,
-    maxScore: 100,
-    updatedAt: '15 Oct 2026',
+    score: riskPulseReport.overall,
+    updatedAt: riskPulseUpdatedAt,
   },
 )
-
-const scaleRange = computed(() => props.maxScore - props.minScore)
-
-const scoreRatio = computed(() =>
-  Math.min(1, Math.max(0, (props.score - props.minScore) / scaleRange.value)),
-)
-
-const categories = ['Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
 
 const mutedSegmentColors = [
   'var(--component-risk-score-meter-low)',
@@ -50,12 +50,7 @@ const strongSegmentColors = [
   'var(--component-risk-score-meter-excellent-strong)',
 ]
 
-const scoreCategory = computed(() => {
-  const index = Math.min(categories.length - 1, Math.floor(scoreRatio.value * categories.length))
-  return categories[index]
-})
-
-const markerPosition = computed(() => `${scoreRatio.value * 100}%`)
+const markerPosition = computed(() => `${scoreRatio(props.score) * 100}%`)
 
 const isSynced = computed(() => props.variant === 'synced')
 const isSyncing = computed(() => props.variant === 'syncing')
@@ -72,7 +67,7 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
     </header>
 
     <div v-if="variant === 'unsync'" class="risk-card__score">
-      <span class="risk-card__value">{{ score }}</span>
+      <span class="risk-card__value">{{ formatScore(score) }}</span>
       <span class="risk-card__blur" aria-hidden="true"></span>
       <span class="risk-card__badge risk-card__badge--info">
         <span class="risk-card__badge-icon" aria-hidden="true"></span>
@@ -88,14 +83,14 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
     </div>
 
     <div v-else class="risk-card__score risk-card__score--synced">
-      <span class="risk-card__value">{{ score }}</span>
-      <span class="risk-card__badge risk-card__badge--success">{{ scoreCategory }}</span>
+      <span class="risk-card__value">{{ formatScore(score) }}</span>
+      <RiskBandChip :score="score" />
     </div>
 
     <div class="risk-card__scale">
       <div class="risk-card__range">
-        <span>{{ minScore }}</span>
-        <span>{{ maxScore }}</span>
+        <span>{{ RISK_SCORE_MIN }}</span>
+        <span>{{ RISK_SCORE_MAX }}</span>
       </div>
 
       <div class="risk-card__meter" :class="{ 'risk-card__meter--muted': !isSynced }" aria-hidden="true">
@@ -113,7 +108,7 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
       </div>
 
       <div class="risk-card__categories" aria-hidden="true">
-        <span v-for="category in categories" :key="category">{{ category }}</span>
+        <span v-for="band in riskBands" :key="band">{{ band }}</span>
       </div>
     </div>
 
@@ -123,11 +118,21 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
 
     <div v-else-if="isSynced" class="risk-card__footer">
       <p class="risk-card__description">Last update: {{ updatedAt }}</p>
-      <a class="risk-card__report" :href="reportUrl" target="_blank" rel="noopener">
-        Download Report
-        <span class="risk-card__report-icon" aria-hidden="true"></span>
-        <span class="risk-card__sr-only">(opens in a new tab)</span>
-      </a>
+      <div class="risk-card__actions">
+        <button
+          id="risk-card-view-details"
+          type="button"
+          class="risk-card__report"
+          @click="openRiskPulse()"
+        >
+          View details
+        </button>
+        <a class="risk-card__report" :href="reportUrl" target="_blank" rel="noopener">
+          Download Report
+          <span class="risk-card__report-icon" aria-hidden="true"></span>
+          <span class="risk-card__sr-only">(opens in a new tab)</span>
+        </a>
+      </div>
     </div>
 
     <p v-else class="risk-card__description">
@@ -247,11 +252,6 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   color: var(--semantic-text-warning-ach-color-text-warning);
 }
 
-.risk-card__badge--success {
-  background: var(--semantic-bg-success-ach-color-bg-success-surface);
-  color: var(--semantic-text-success-ach-color-text-success);
-}
-
 .risk-card__badge strong {
   font-weight: 700;
 }
@@ -303,6 +303,14 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   flex-direction: column;
   align-items: center;
   gap: var(--primitives-padding-2);
+}
+
+.risk-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--primitives-padding-1) var(--primitives-padding-4);
 }
 
 .risk-card__range,

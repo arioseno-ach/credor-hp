@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laporan Kesehatan Usaha · PT Harapan Terakhir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Prototype report: dummy data in the Risk Pulse v5 format. Score bands follow the prototype's
+     Company Health card (20-point bands), so 69 reads as Sangat Baik. -->
+<style>/* Risk Pulse A4 report: fixed pages, print-safe (ink + one accent). */
+:root{
+  color-scheme:light;
+  --ink:#0F1B27;
+  --muted:#4A5663;
+  --rule:#C9D0D7;
+  --tone:#EEF0F2;
+  --tone2:#DCE1E6;
+  --accent:#1A44E0;
+  --ok:#1F7A3E;
+  --mid:#9A6B00;
+  --bad:#B3261E;
+  --b1:#C8372D;--b2:#E07A2E;--b3:#B5A82E;--b4:#5FA84A;--b5:#1F7A3E;
+  --font:"Public Sans","Inter","Helvetica Neue",Arial,sans-serif;
+}
+@page{size:A4;margin:0}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:#8A949E}
+body{font-family:var(--font);font-size:8pt;line-height:1.3;color:var(--ink);-webkit-font-smoothing:antialiased;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.num{font-variant-numeric:tabular-nums}
+strong{font-weight:700}
+
+/* ---------- screen toolbar (not printed) ---------- */
+.toolbar{position:sticky;top:0;z-index:5;display:flex;justify-content:center;gap:3mm;padding:3mm;background:#5E6872}
+.toolbar button{font:600 9pt var(--font);padding:2mm 5mm;border:0;border-radius:999px;background:#fff;color:var(--ink);cursor:pointer}
+.toolbar button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.toolbar span{align-self:center;color:#fff;font-size:8pt}
+@media print{.toolbar{display:none}}
+
+/* ---------- page ---------- */
+.page{width:210mm;height:297mm;margin:8mm auto;background:#fff;padding:11mm 13mm 0;
+  display:flex;flex-direction:column;overflow:hidden;break-after:page}
+.page:last-child{break-after:auto}
+.pb{flex:1;min-height:0}
+@media print{html{background:#fff}.page{margin:0}}
+
+/* ---------- header / footer ---------- */
+.ph{display:flex;justify-content:space-between;align-items:center;gap:6mm;padding-bottom:3mm;border-bottom:1.4pt solid var(--ink);margin-bottom:3mm}
+.ph-brand{flex:none}
+.logo{display:block;height:7mm;width:auto}
+.ph-info{min-width:0;text-align:right}
+.ph-t{font-size:12.5pt;font-weight:700;letter-spacing:-0.01em;line-height:1.2;white-space:nowrap}
+.ph-meta{margin-top:1mm;display:flex;justify-content:flex-end;gap:6mm;font-size:7.2pt;color:var(--muted);white-space:nowrap}
+.ph-meta strong{color:var(--ink);font-weight:600}
+.pf{display:flex;justify-content:space-between;gap:6mm;border-top:0.6pt solid var(--rule);padding:2.4mm 0 7mm;font-size:7pt;color:var(--muted)}
+
+/* ---------- sections ---------- */
+.sec{margin-bottom:2.6mm}
+.sec h2{display:flex;align-items:center;gap:2.4mm;font-size:9pt;font-weight:700;background:var(--tone);padding:1mm 2.2mm;margin-bottom:1.4mm}
+.sec h2 .n{display:inline-grid;place-items:center;min-width:4.6mm;height:4.6mm;background:var(--ink);color:#fff;font-size:7.4pt}
+.note{font-size:7pt;color:var(--muted);margin-top:1mm}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:5mm}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;vertical-align:top;padding:0.8mm 1.6mm}
+.r{text-align:right}
+.grid thead th{font-size:7.4pt;font-weight:600;color:var(--muted);border-bottom:0.9pt solid var(--ink);padding-top:0.6mm;padding-bottom:0.8mm;white-space:nowrap}
+.grid tbody td{border-bottom:0.5pt solid var(--rule)}
+.grid td strong{display:block}
+.grid tr.grp td{background:var(--tone);font-weight:700;border-bottom:0.5pt solid var(--rule);padding-top:0.9mm;padding-bottom:0.9mm}
+.grid tr.tot td{font-weight:700;border-top:0.9pt solid var(--ink);border-bottom:0}
+.grid td.bar{width:12mm;min-width:12mm;vertical-align:middle;padding-left:0.6mm}
+.grid td.r{white-space:nowrap}
+.score-tbl .grid td.bar{width:24mm}
+.grid .neg{color:var(--bad)}
+.kv th{width:30mm;white-space:nowrap;font-weight:600;color:var(--muted);background:var(--tone);border-bottom:0.6pt solid #fff}
+.kv td{border-bottom:0.5pt solid var(--rule);font-weight:600}
+.kv th,.kv td{padding-top:0.6mm;padding-bottom:0.6mm}
+.two td{width:50%}
+.two td strong{margin-bottom:0.4mm}
+.acts td:nth-child(2){width:40mm}
+.acts td:nth-child(4),.acts td:nth-child(5){white-space:nowrap}
+.imp.tinggi{font-weight:700}
+.imp.rendah{color:var(--muted)}
+.comp{font-size:7.4pt}
+.comp td{padding:0.5mm 1mm}
+.comp td.bar{width:9mm;min-width:9mm}
+.comp td:first-child{padding-left:1.6mm}
+.dash{color:var(--muted)}
+
+/* ---------- mini bars and status ---------- */
+.mb{display:block;height:2.6mm;background:var(--tone2)}
+.mb i{display:block;height:100%;background:var(--ink)}
+.mb.hatch i{background:repeating-linear-gradient(45deg,var(--ink) 0 0.6mm,transparent 0.6mm 1.2mm)}
+.st{display:inline-flex;align-items:center;gap:1.2mm;white-space:nowrap;font-weight:600}
+.st::before{content:"";width:1.8mm;height:1.8mm;border-radius:50%;background:currentColor}
+.st.ok{color:var(--ok)} .st.mid{color:var(--mid)} .st.bad{color:var(--bad)}
+.st.chk{color:var(--muted)}
+.st.chk::before{background:transparent;border:0.5mm solid currentColor}
+.mk{font-weight:700;font-size:9.5pt}
+.mk.ok{color:var(--ok)} .mk.bad{color:var(--bad)}
+
+/* ---------- score ---------- */
+.score-row{display:grid;grid-template-columns:62mm 1fr;gap:5mm;align-items:start}
+.scorebox{border:1pt solid var(--ink);padding:3.2mm 3.6mm}
+.scorebox .lbl{font-size:7.4pt;color:var(--muted)}
+.scorebox .fig{font-size:30pt;font-weight:700;letter-spacing:-0.03em;line-height:1;margin-top:1mm;font-variant-numeric:tabular-nums}
+.scorebox .fig small{font-size:10pt;color:var(--muted);font-weight:600;letter-spacing:0;margin-left:1mm}
+.scorebox .band{font-size:12pt;font-weight:700;margin:0.8mm 0 2.6mm}
+.segs{position:relative;display:flex;gap:0.5mm;height:2.6mm}
+.segs span{display:block;opacity:.3}
+.segs span.on{opacity:1}
+.segs .b1,.key .b1{background:var(--b1)} .segs .b2,.key .b2{background:var(--b2)} .segs .b3,.key .b3{background:var(--b3)}
+.segs .b4,.key .b4{background:var(--b4)} .segs .b5,.key .b5{background:var(--b5)}
+.tick{position:absolute;top:-1.2mm;bottom:-1.2mm;width:0.9mm;margin-left:-0.9mm;background:var(--ink)}
+.key{display:flex;flex-wrap:wrap;gap:0.6mm 2.6mm;margin-top:2mm;font-size:6.8pt;color:var(--muted)}
+.key span{display:inline-flex;align-items:center;gap:0.8mm;white-space:nowrap}
+.key i{width:1.8mm;height:1.8mm;display:inline-block;opacity:.5}
+.key .on{color:var(--ink);font-weight:700} .key .on i{opacity:1}
+.score-tbl .lead{margin-top:2.2mm;font-size:8.4pt}
+
+/* ---------- confirm ---------- */
+.confirm{border-left:1.4mm solid var(--ink);background:var(--tone);padding:2.2mm 3mm}
+.confirm p{margin-top:0.6mm}
+
+.small .gl{font-size:7pt;color:var(--muted)}
+.small .gl strong{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <span>Contoh laporan untuk prototype</span>
+  <button type="button" onclick="window.print()">Simpan sebagai PDF</button>
+</div>
+
+<div class="page"><header class="ph">
+  <div class="ph-brand"><img class="logo" src="/logo/logo-riskpulse.svg" alt="Credor RiskPulse"></div>
+  <div class="ph-info">
+    <p class="ph-t">Laporan Kesehatan Usaha</p>
+    <p class="ph-meta"><span>No. laporan <strong class="num">396667c5-394a-4ed2-8f98-a5f70997ee49</strong></span><span>Tanggal dibuat <strong>15 Okt 2026</strong></span></p>
+  </div>
+</header><main class="pb">
+
+<section class="sec"><h2><span class="n">1</span>Identitas perusahaan</h2><table class="kv">
+<tr><th>Nama perusahaan</th><td>PT Harapan Terakhir</td><th>NPWP</th><td class="num">0923882097320873</td></tr>
+<tr><th>Status pajak</th><td>PKP</td><th>Periode data</th><td>Okt 2025 – Sep 2026</td></tr>
+<tr><th>Tanggal penilaian</th><td>15 Okt 2026</td><th>Persetujuan data s.d.</th><td>14 Jan 2027</td></tr>
+<tr><th>Diajukan melalui</th><td>Credor</td><th>Sumber data</th><td>e-Faktur (Coretax)</td></tr>
+</table></section>
+
+<section class="sec"><h2><span class="n">2</span>Skor kesehatan</h2><div class="score-row"><div class="scorebox">
+  <p class="lbl">Skor kesehatan perusahaan</p>
+  <p class="fig"><span>69</span><small>/100</small></p>
+  <p class="band">Sangat Baik</p>
+  <div class="segs"><span class="b1" style="flex:20"></span><span class="b2" style="flex:20"></span><span class="b3" style="flex:20"></span><span class="b4 on" style="flex:20"></span><span class="b5" style="flex:20"></span><i class="tick" style="left:69%"></i></div>
+  <p class="key"><span><i class="b1"></i>Kurang 0–19</span><span><i class="b2"></i>Cukup 20–39</span><span><i class="b3"></i>Baik 40–59</span><span class="on"><i class="b4"></i>Sangat Baik 60–79</span><span><i class="b5"></i>Istimewa 80–100</span></p>
+</div><div class="score-tbl"><table class="grid"><thead><tr><th>Kelompok penilaian</th><th class="r">Nilai</th><th>0–100</th><th>Status</th></tr></thead><tbody>
+<tr><td>Proses internal</td><td class="r num">86</td><td class="bar"><span class="mb"><i style="width:86%"></i></span></td><td><span class="st ok">Istimewa</span></td></tr>
+<tr><td>Konsentrasi pemasok</td><td class="r num">62</td><td class="bar"><span class="mb"><i style="width:62%"></i></span></td><td><span class="st ok">Sangat Baik</span></td></tr>
+<tr><td>Konsentrasi pelanggan</td><td class="r num">48</td><td class="bar"><span class="mb"><i style="width:48%"></i></span></td><td><span class="st mid">Baik</span></td></tr>
+<tr><td>Stabilitas usaha</td><td class="r num">58</td><td class="bar"><span class="mb"><i style="width:58%"></i></span></td><td><span class="st mid">Baik</span></td></tr>
+</tbody></table><p class="note">Nilai kelompok = rata-rata komponen skor dalam kelompok. Rincian di bagian 6.</p><p class="lead"><strong>Proses rapi, pembeli masih terpusat.</strong> Pencatatan faktur Anda bersih dan pemasok cukup tersebar. Skor bisa naik bila penjualan tidak bergantung pada lima pembeli teratas dan lebih stabil dari bulan ke bulan.</p></div></div></section>
+
+<section class="sec"><h2><span class="n">3</span>Ringkasan</h2><table class="grid two"><thead><tr><th><span class="st ok">Yang sudah baik</span></th><th><span class="st bad">Perlu perhatian</span></th></tr></thead><tbody>
+<tr><td><strong>Pencatatan faktur rapi</strong>Tidak ada faktur gagal. Amendemen hanya 1,4% di sisi jual dan 0,5% di sisi beli.</td><td><strong>Lima pembeli menyumbang 70% penjualan</strong>Nusantara Teknologi dan Sumber Logistik saja menyumbang 39%.</td></tr>
+<tr><td><strong>Tarif PPN sesuai</strong>Tarif efektif 11,0% pada penjualan dan pembelian, sesuai ketentuan.</td><td><strong>Faktur jual salah periode</strong>3,7% faktur jual tercatat di masa pajak yang berbeda dari tanggal transaksinya.</td></tr>
+<tr><td><strong>Pembeli yang kembali membeli</strong>78,4% pembeli membeli lebih dari sekali dalam 12 bulan terakhir.</td><td><strong>Penjualan bulanan naik-turun</strong>Penjualan tertinggi Rp 3,1 M di Mar 2026, terendah Rp 1,2 M di Jul 2026.</td></tr>
+</tbody></table><p class="note">Ditulis AI hanya dari angka di laporan ini.</p></section>
+
+<section class="sec"><h2><span class="n">4</span>Mohon konfirmasi</h2><div class="confirm"><strong>Mohon lengkapi NPWP pembeli pada 2 faktur</strong><p>Ada 2 faktur keluaran senilai Rp 28,0 jt yang ditujukan ke pembeli tanpa NPWP. Bisa jadi ini faktur uji atau penjualan ke perorangan. Sampai dilengkapi, faktur ini tidak kami hitung sebagai penjualan ke pelanggan.</p></div></section>
+
+<section class="sec"><h2><span class="n">5</span>Langkah yang disarankan</h2><table class="grid acts"><thead><tr><th class="r">No.</th><th>Langkah</th><th>Kenapa</th><th>Dampak</th><th>Jenis</th></tr></thead><tbody>
+<tr><td class="r num">1</td><td><strong>Perbaiki periode faktur jual</strong></td><td>8 faktur jual (3,7%) tercatat di masa pajak yang salah. Ajukan pembetulan di e-Faktur agar komponen proses internal kembali penuh.</td><td class="imp tinggi">Tinggi</td><td>Cek data</td></tr>
+<tr><td class="r num">2</td><td><strong>Lengkapi NPWP pembeli</strong></td><td>2 faktur senilai Rp 28,0 jt tidak punya NPWP pembeli. Lengkapi, atau batalkan bila itu faktur uji.</td><td class="imp sedang">Sedang</td><td>Cek data</td></tr>
+<tr><td class="r num">3</td><td><strong>Tambah pelanggan di luar lima pembeli teratas</strong></td><td>70,1% penjualan datang dari lima pembeli. Pelanggan baru yang rutin membuat pendapatan lebih tahan bila salah satunya berhenti.</td><td class="imp sedang">Sedang</td><td>Bisnis</td></tr>
+<tr><td class="r num">4</td><td><strong>Ratakan penjualan bulanan</strong></td><td>Penjualan bulanan berubah cukup besar (koefisien variasi 0,38). Kontrak berulang atau termin bulanan membantu arus kas lebih stabil.</td><td class="imp sedang">Sedang</td><td>Bisnis</td></tr>
+<tr><td class="r num">5</td><td><strong>Pertahankan kerapian pencatatan faktur</strong></td><td>Tidak ada faktur gagal dan status persetujuan terisi di sebagian besar faktur. Ini kekuatan utama skor Anda.</td><td class="imp rendah">Rendah</td><td>Bisnis</td></tr>
+</tbody></table></section>
+
+</main><footer class="pf">
+  <span>Rahasia. Hanya untuk PT Harapan Terakhir dan pihak yang disetujui.</span>
+  <span>Disusun dari data e-Faktur per 15 Okt 2026</span>
+  <span class="num">Halaman 1 dari 2</span>
+</footer></div>
+
+<div class="page"><header class="ph">
+  <div class="ph-brand"><img class="logo" src="/logo/logo-riskpulse.svg" alt="Credor RiskPulse"></div>
+  <div class="ph-info">
+    <p class="ph-t">Laporan Kesehatan Usaha</p>
+    <p class="ph-meta"><span>No. laporan <strong class="num">396667c5-394a-4ed2-8f98-a5f70997ee49</strong></span><span>Tanggal dibuat <strong>15 Okt 2026</strong></span></p>
+  </div>
+</header><main class="pb">
+
+<section class="sec"><h2><span class="n">6</span>Rincian komponen skor</h2><div class="cols"><table class="grid comp"><thead><tr><th>Komponen</th><th class="r">Nilai</th><th class="r">Skor</th><th>0–10</th><th>Status</th></tr></thead><tbody>
+<tr class="grp"><td colspan="4">Proses internal</td><td class="r num">86</td></tr>
+<tr><td>Faktur jual yang diamendemen</td><td class="r num">1,4%</td><td class="r num">9,0</td><td class="bar"><span class="mb"><i style="width:90%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Faktur beli yang diamendemen</td><td class="r num">0,5%</td><td class="r num">9,6</td><td class="bar"><span class="mb"><i style="width:96%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Faktur jual yang gagal</td><td class="r num">0,0%</td><td class="r num">10,0</td><td class="bar"><span class="mb"><i style="width:100%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Faktur beli yang gagal</td><td class="r num">0,0%</td><td class="r num">10,0</td><td class="bar"><span class="mb"><i style="width:100%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Faktur jual salah periode</td><td class="r num">3,7%</td><td class="r num">4,8</td><td class="bar"><span class="mb"><i style="width:48%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr><td>Faktur beli salah periode</td><td class="r num">1,1%</td><td class="r num">8,9</td><td class="bar"><span class="mb"><i style="width:89%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Nilai faktur jual bermasalah</td><td class="r num">0,9%</td><td class="r num">9,2</td><td class="bar"><span class="mb"><i style="width:92%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Nilai faktur beli bermasalah</td><td class="r num">0,4%</td><td class="r num">9,7</td><td class="bar"><span class="mb"><i style="width:97%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Faktur jual berstatus disetujui</td><td class="r num">92,5%</td><td class="r num">7,8</td><td class="bar"><span class="mb"><i style="width:78%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Faktur beli berstatus disetujui</td><td class="r num">88,0%</td><td class="r num">7,0</td><td class="bar"><span class="mb"><i style="width:70%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+</tbody></table><table class="grid comp"><thead><tr><th>Komponen</th><th class="r">Nilai</th><th class="r">Skor</th><th>0–10</th><th>Status</th></tr></thead><tbody>
+<tr class="grp"><td colspan="4">Konsentrasi pemasok</td><td class="r num">62</td></tr>
+<tr><td>Pangsa pemasok terbesar</td><td class="r num">18,6%</td><td class="r num">7,2</td><td class="bar"><span class="mb"><i style="width:72%"></i></span></td><td><span class="st ok">Baik</span></td></tr>
+<tr><td>Pangsa 5 pemasok terbesar</td><td class="r num">54,0%</td><td class="r num">4,6</td><td class="bar"><span class="mb"><i style="width:46%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr><td>Ketergantungan pada pemasok</td><td class="r num">0,092</td><td class="r num">6,1</td><td class="bar"><span class="mb"><i style="width:61%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr><td>Pemasok yang dipakai berulang</td><td class="r num">81,0%</td><td class="r num">6,9</td><td class="bar"><span class="mb"><i style="width:69%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr class="grp"><td colspan="4">Konsentrasi pelanggan</td><td class="r num">48</td></tr>
+<tr><td>Pangsa pembeli terbesar</td><td class="r num">22,2%</td><td class="r num">5,9</td><td class="bar"><span class="mb"><i style="width:59%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr><td>Pangsa 5 pembeli terbesar</td><td class="r num">70,1%</td><td class="r num">2,6</td><td class="bar"><span class="mb"><i style="width:26%"></i></span></td><td><span class="st bad">Perlu perhatian</span></td></tr>
+<tr><td>Ketergantungan pada pembeli</td><td class="r num">0,118</td><td class="r num">4,0</td><td class="bar"><span class="mb"><i style="width:40%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr><td>Pembeli yang membeli berulang</td><td class="r num">78,4%</td><td class="r num">6,7</td><td class="bar"><span class="mb"><i style="width:67%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr class="grp"><td colspan="4">Stabilitas usaha</td><td class="r num">58</td></tr>
+<tr><td>Naik-turun penjualan bulanan</td><td class="r num">0,38</td><td class="r num">5,2</td><td class="bar"><span class="mb"><i style="width:52%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+<tr><td>Naik-turun pembelian bulanan</td><td class="r num">0,27</td><td class="r num">6,4</td><td class="bar"><span class="mb"><i style="width:64%"></i></span></td><td><span class="st mid">Cukup</span></td></tr>
+</tbody></table></div><p class="note">Skor 0–10 per komponen; status dari label mesin penilai. Baris kelompok menunjukkan nilai kelompok 0–100.</p></section>
+
+<div class="cols"><div>
+<section class="sec"><h2><span class="n">7</span>Komposisi penjualan</h2><table class="grid"><thead><tr><th>Penjualan</th><th class="r">Faktur</th><th class="r">DPP</th><th class="r">Pangsa</th><th></th></tr></thead><tbody>
+<tr><td>Ke swasta</td><td class="r num">171</td><td class="r num">Rp 18,55 M</td><td class="r num">75,4%</td><td class="bar"><span class="mb"><i style="width:75.4%"></i></span></td></tr>
+<tr><td>Ke BUMN dan pemerintah</td><td class="r num">41</td><td class="r num">Rp 6,02 M</td><td class="r num">24,5%</td><td class="bar"><span class="mb"><i style="width:24.5%"></i></span></td></tr>
+<tr><td>Tanpa NPWP pembeli<br><span class="st chk">Perlu dikonfirmasi</span></td><td class="r num">2</td><td class="r num">Rp 0,03 M</td><td class="r num">0,1%</td><td class="bar"><span class="mb hatch"><i style="width:0.1%"></i></span></td></tr>
+</tbody></table><p class="note">Pangsa dari total faktur keluaran, Rp 24,60 M.</p></section>
+
+<section class="sec"><h2><span class="n">8</span>Pembeli utama</h2><table class="grid"><thead><tr><th>Pembeli</th><th class="r">Faktur</th><th class="r">DPP</th><th class="r">Pangsa</th><th></th></tr></thead><tbody>
+<tr><td>Nusantara Teknologi Prima</td><td class="r num">26</td><td class="r num">Rp 5,46 M</td><td class="r num">22,2%</td><td class="bar"><span class="mb"><i style="width:22.2%"></i></span></td></tr>
+<tr><td>Sumber Logistik Makmur</td><td class="r num">18</td><td class="r num">Rp 4,18 M</td><td class="r num">17,0%</td><td class="bar"><span class="mb"><i style="width:17%"></i></span></td></tr>
+<tr><td>Karya Utama Dagang</td><td class="r num">14</td><td class="r num">Rp 3,07 M</td><td class="r num">12,5%</td><td class="bar"><span class="mb"><i style="width:12.5%"></i></span></td></tr>
+<tr><td>Cipta Digital Solusi</td><td class="r num">11</td><td class="r num">Rp 2,58 M</td><td class="r num">10,5%</td><td class="bar"><span class="mb"><i style="width:10.5%"></i></span></td></tr>
+<tr><td>Wijaya Karya Beton</td><td class="r num">9</td><td class="r num">Rp 1,95 M</td><td class="r num">7,9%</td><td class="bar"><span class="mb"><i style="width:7.9%"></i></span></td></tr>
+<tr><td>Adhi Karya</td><td class="r num">7</td><td class="r num">Rp 1,72 M</td><td class="r num">7,0%</td><td class="bar"><span class="mb"><i style="width:7%"></i></span></td></tr>
+<tr><td>Lainnya (24 pembeli)</td><td class="r num">129</td><td class="r num">Rp 5,64 M</td><td class="r num">22,9%</td><td class="bar"><span class="mb"><i style="width:22.9%"></i></span></td></tr>
+</tbody></table><p class="note">Pangsa dari seluruh penjualan.</p></section>
+</div><div>
+<section class="sec"><h2><span class="n">9</span>Penjualan, pembelian, dan PPN</h2><table class="grid"><thead><tr><th></th><th class="r">Penjualan</th><th class="r">Pembelian</th></tr></thead><tbody>
+<tr><td>Nilai transaksi (DPP)</td><td class="r num">Rp 24,60 M</td><td class="r num">Rp 17,24 M</td></tr>
+<tr><td>PPN</td><td class="r num">Rp 2,71 M</td><td class="r num">Rp 1,90 M</td></tr>
+<tr><td>Jumlah faktur</td><td class="r num">214</td><td class="r num">186</td></tr>
+<tr><td>Rata-rata per faktur</td><td class="r num">Rp 115,0 jt</td><td class="r num">Rp 92,7 jt</td></tr>
+<tr><td>Tarif PPN efektif</td><td class="r num">11,0%</td><td class="r num">11,0%</td></tr>
+<tr class="tot"><td>PPN bersih (keluaran − masukan)</td><td colspan="2" class="r num">Rp 809,6 jt</td></tr>
+</tbody></table></section>
+
+<section class="sec"><h2><span class="n">10</span>Daftar periksa proses faktur</h2><table class="grid"><thead><tr><th></th><th>Pemeriksaan</th><th class="r">Jual</th><th class="r">Beli</th></tr></thead><tbody>
+<tr><td><span class="mk ok">✓</span></td><td>Amendemen faktur</td><td class="r num">1,4%</td><td class="r num">0,5%</td></tr>
+<tr><td><span class="mk ok">✓</span></td><td>Faktur gagal</td><td class="r num">0,0%</td><td class="r num">0,0%</td></tr>
+<tr><td><span class="mk bad">✗</span></td><td>Faktur salah periode</td><td class="r num">3,7%</td><td class="r num">1,1%</td></tr>
+<tr><td><span class="mk ok">✓</span></td><td>Nilai faktur bermasalah</td><td class="r num">0,9%</td><td class="r num">0,4%</td></tr>
+<tr><td><span class="mk ok">✓</span></td><td>Status persetujuan terisi</td><td class="r num">92,5%</td><td class="r num">88,0%</td></tr>
+</tbody></table></section>
+</div></div>
+
+<section class="sec"><h2><span class="n">11</span>Catatan data</h2><table class="grid"><thead><tr><th>Catatan</th><th>Temuan</th><th>Tindak lanjut</th></tr></thead><tbody>
+<tr><td><strong>Faktur jual salah periode</strong></td><td>8 faktur, 3,7% dari faktur jual</td><td>Ajukan pembetulan di e-Faktur</td></tr>
+<tr><td><strong>Pembeli tanpa NPWP</strong></td><td>2 faktur senilai Rp 28,0 jt</td><td>Lengkapi NPWP atau batalkan faktur uji</td></tr>
+<tr><td><strong>Data Oktober 2026 belum lengkap</strong></td><td>Faktur Oktober belum masuk ke perhitungan</td><td>Tidak perlu tindakan, kami memperbarui data</td></tr>
+</tbody></table></section>
+
+<section class="sec small"><h2><span class="n">12</span>Istilah dan sumber</h2><p class="gl"><strong>DPP</strong> nilai dasar transaksi sebelum PPN. <strong>PPN keluaran / masukan</strong> PPN atas penjualan / pembelian. <strong>M</strong> miliar, <strong>jt</strong> juta. <strong>Ketergantungan</strong> indeks HHI, 0 sangat tersebar sampai 1 satu mitra. <strong>Naik-turun</strong> koefisien variasi bulanan. <strong>Skala skor</strong> Kurang 0–19 · Cukup 20–39 · Baik 40–59 · Sangat Baik 60–79 · Istimewa 80–100. Laporan ini disusun dari data e-Faktur yang Anda setujui untuk dibagikan (berlaku sampai 14 Jan 2027). Laporan ini bukan audit dan bukan opini pajak.</p></section>
+
+</main><footer class="pf">
+  <span>Rahasia. Hanya untuk PT Harapan Terakhir dan pihak yang disetujui.</span>
+  <span>Disusun dari data e-Faktur per 15 Okt 2026</span>
+  <span class="num">Halaman 2 dari 2</span>
+</footer></div>
+</body>
+</html>

@@ -308,7 +308,7 @@ const timeline = computed<TimelineItem[]>(() => [
               <dl class="application-detail__facts">
                 <div>
                   <dt>Company</dt>
-                  <dd>PT Harapan Terakhir</dd>
+                  <dd>PT Maju Sejahtera Indonesia</dd>
                 </div>
                 <div>
                   <dt>Disbursement account</dt>

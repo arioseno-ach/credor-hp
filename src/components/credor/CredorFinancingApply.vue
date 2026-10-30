@@ -486,7 +486,7 @@ onBeforeUnmount(() => {
                 <span class="apply__icon apply__icon--check" aria-hidden="true"></span>
                 Verified
               </span>
-              <p class="apply__company-name">PT Harapan Terakhir</p>
+              <p class="apply__company-name">{{ verifiedCompany.name }}</p>
               <dl class="apply__company-facts">
                 <div><dt>NPWP</dt><dd>{{ verifiedCompany.npwp }}</dd></div>
                 <div><dt>NITKU</dt><dd>{{ verifiedCompany.nitku }}</dd></div>

@@ -20,7 +20,7 @@ type SidebarItem = {
   logo?: string
 }
 
-const activeItem = ref('Home')
+const activeItem = ref('Cash & Financing')
 const companySwitcher = ref<HTMLDetailsElement | null>(null)
 const { state, toggleSidebar } = useSidebar()
 
@@ -80,17 +80,17 @@ function closeCompanySwitcher() {
     <SidebarHeader class="ach-sidebar__header">
       <details ref="companySwitcher" class="ach-sidebar__company-switcher">
         <summary class="ach-sidebar__company" aria-label="Switch company">
-          <span class="ach-sidebar__initials" aria-hidden="true">HT</span>
+          <span class="ach-sidebar__initials" aria-hidden="true">MS</span>
           <span class="ach-sidebar__company-copy">
-            <span class="ach-sidebar__company-name">PT Harapan Terakhir</span>
+            <span class="ach-sidebar__company-name">PT Maju Sejahtera Indonesia</span>
             <span class="ach-sidebar__badge">Corporate</span>
-            <span class="ach-sidebar__company-id">092388209732087340000000</span>
+            <span class="ach-sidebar__company-id">8726374837261909</span>
           </span>
           <img class="ach-sidebar__company-chevron" src="/icons/ui-actions/expand-more.svg" alt="" />
         </summary>
         <div class="ach-sidebar__company-menu" role="group" aria-label="Companies">
           <button class="ach-sidebar__company-option" type="button" aria-current="true" @click="closeCompanySwitcher">
-            PT Harapan Terakhir
+            PT Maju Sejahtera Indonesia
           </button>
           <button class="ach-sidebar__company-option" type="button" disabled>
             Switch company…
