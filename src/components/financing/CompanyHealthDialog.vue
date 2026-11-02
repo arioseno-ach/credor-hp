@@ -21,9 +21,9 @@ const dialogStyle: StyleValue = {
 }
 
 const benefits = [
-  'Lihat skor kesehatan bisnis Anda secara instan, tanpa biaya.',
-  'Profil yang kuat meningkatkan peluang bunga mulai dari 1%.',
-  'Temukan area yang bisa diperbaiki sebelum Anda mengajukan.',
+  'See your business health score instantly, at no cost.',
+  'A strong profile unlocks interest rates starting from 1%.',
+  'Find areas to improve before you apply.',
 ]
 
 function startHealthCheck() {
@@ -45,13 +45,13 @@ function startHealthCheck() {
             >
 
             <DialogTitle class="company-health-dialog__title">
-              Perusahaan yang sehat berpeluang mendapat bunga lebih rendah
+              Healthy companies qualify for lower interest rates
             </DialogTitle>
 
             <DialogDescription class="company-health-dialog__description">
-              Cek Company Health bisnis Anda sebelum mengajukan pendanaan. Profil bisnis yang kuat
-              dan terverifikasi membantu kami menilai Anda lebih akurat, sehingga membuka peluang
-              suku bunga yang lebih kompetitif.
+              Check your business Company Health before applying for financing. A strong and
+              verified business profile helps us assess you more accurately, unlocking more
+              competitive interest rates.
             </DialogDescription>
 
             <ul class="company-health-dialog__benefits">
@@ -69,7 +69,7 @@ function startHealthCheck() {
               class="company-health-dialog__cta"
               @click="startHealthCheck"
             >
-              Cek Kesehatan Perusahaan Gratis
+              Get Your Free Company Health Check
               <template #trailingIcon>
                 <span class="company-health-dialog__cta-arrow" aria-hidden="true"></span>
               </template>
@@ -80,7 +80,7 @@ function startHealthCheck() {
         <div class="company-health-dialog__visual">
           <img
             class="company-health-dialog__visual-image"
-            src="/images/risk-pulse-banner.png"
+            src="/images/risk-pulse-banner-v2.png"
             alt=""
             aria-hidden="true"
           >
