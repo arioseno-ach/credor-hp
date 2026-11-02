@@ -80,19 +80,22 @@ const stories = computed(
       {
         id: 'rp-working',
         title: "What's working",
-        evidenceLabel: 'Strongest signals',
+        evidenceLabel: 'Strongest signal',
         tone: 'strength',
         categories: topCategories(3, report.value),
       },
       {
         id: 'rp-attention',
         title: 'Needs attention',
-        evidenceLabel: 'Weakest signals',
+        evidenceLabel: 'Weakest signal',
         tone: 'weakness',
         categories: bottomCategories(3, report.value),
       },
     ] as const,
 )
+
+/** Heading track + one track per category, shared by both cells so matching rows stay level. */
+const pairRows = computed(() => 1 + Math.max(...stories.value.map((story) => story.categories.length)))
 
 // Which categories have their indicator list open.
 const shownIndicators = ref<string[]>([])
@@ -247,8 +250,8 @@ watch(activeId, async () => {
             target="_blank"
             rel="noopener"
           >
-            <!-- The report covers the latest month only, whichever month the page shows. -->
-            Download {{ riskPulseMonths[0].label }} report
+            <!-- One demo file for every month; only the month in the label follows the selection. -->
+            {{ month.label }} report
             <span class="rp__download-icon" aria-hidden="true"></span>
             <span class="sr-only">(opens in a new tab)</span>
           </Button>
@@ -288,12 +291,16 @@ watch(activeId, async () => {
       </div>
     </section>
 
-    <div :id="chapters[1].id" class="rp__pair">
+    <div
+      :id="chapters[1].id"
+      class="rp__pair"
+      :style="{ '--rp-rows': String(pairRows), '--rp-rows-content': String(pairRows - 1) }"
+    >
     <section
       v-for="story in stories"
       :id="story.id"
       :key="story.id"
-      class="rp__chapter rp__cell"
+      class="rp__chapter rp__card rp__cell"
       :aria-labelledby="`${story.id}-title`"
     >
       <h2 :id="`${story.id}-title`" class="rp__h2" tabindex="-1">{{ story.title }}</h2>
@@ -304,9 +311,12 @@ watch(activeId, async () => {
             :meta="areaLabelForLayerName(category.layerName)"
             :score="category.score"
           >
-            <p class="rp__text">{{ categorySignal(category.name, story.tone, report) }}</p>
+            <p v-if="categorySignal(category.name, story.tone, report)" class="rp__text">
+              {{ categorySignal(category.name, story.tone, report) }}
+            </p>
             <!-- One signal per category keeps the paired columns level. -->
             <div v-if="evidenceFor(category.name, story.tone, 1, report).length" class="rp__evidence">
+              <p class="rp__evidence-label">{{ story.evidenceLabel }}</p>
               <RiskIndicatorList
                 compact
                 :indicators="evidenceFor(category.name, story.tone, 1, report)"
@@ -319,7 +329,7 @@ watch(activeId, async () => {
     </section>
     </div>
 
-    <section :id="chapters[2].id" class="rp__chapter" aria-labelledby="rp-breakdown-title">
+    <section :id="chapters[2].id" class="rp__chapter rp__card" aria-labelledby="rp-breakdown-title">
       <h2 id="rp-breakdown-title" class="rp__h2" tabindex="-1">{{ chapters[2].label }}</h2>
       <Accordion type="multiple">
         <AccordionItem v-for="area in areas" :key="area.id" :value="area.id">
@@ -375,7 +385,7 @@ watch(activeId, async () => {
       </Accordion>
     </section>
 
-    <section :id="chapters[3].id" class="rp__chapter" aria-labelledby="rp-improve-title">
+    <section :id="chapters[3].id" class="rp__chapter rp__card" aria-labelledby="rp-improve-title">
       <div class="rp__improve">
         <h2 id="rp-improve-title" class="rp__h2" tabindex="-1">{{ chapters[3].label }}</h2>
         <ol class="rp__steps">
@@ -390,7 +400,7 @@ watch(activeId, async () => {
       </div>
     </section>
 
-    <section class="rp__chapter rp__closing" aria-labelledby="rp-next-title">
+    <section class="rp__chapter rp__closing rp__card" aria-labelledby="rp-next-title">
       <h2 id="rp-next-title" class="rp__h2">Next step</h2>
       <p class="rp__text">
         Companies in the {{ band }} band may qualify for rates from {{ startingRate }}% per month.
@@ -625,7 +635,7 @@ watch(activeId, async () => {
   border-bottom-color: var(--semantic-text-ach-color-text-default);
 }
 
-/* Chapters: spacing and one quiet divider, no cards. */
+/* Chapters: spacing and flow; chapters that render as cards add .rp__card. */
 .rp__chapter {
   display: flex;
   flex-direction: column;
@@ -635,30 +645,47 @@ watch(activeId, async () => {
   scroll-margin-top: var(--primitives-padding-12);
 }
 
-.rp__chapter + .rp__chapter,
-.rp__chapter + .rp__pair,
-.rp__pair + .rp__chapter,
-.rp__pair + .rp__pair {
-  border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+/* The card chapters share one recipe, the same one the Credor cards use. */
+.rp__card {
+  box-sizing: border-box;
+  border: var(--primitives-border-width-default) solid var(--component-card-border);
+  border-radius: var(--primitives-border-radius-lg);
+  background: var(--component-card-background);
+  padding: var(--primitives-padding-6) var(--primitives-padding-8);
 }
 
-/* Two chapters side by side; each cell is a container so its rows switch to the compact head. */
+/* Cards sit 24px apart, the same gap as between the two highlight cards (never the cells inside the pair). */
+.rp__chapter.rp__card:not(.rp__cell) {
+  margin-top: var(--primitives-padding-6);
+}
+
+/*
+ * Two chapters as cards. Both cells share the pair's row tracks (subgrid), so the category
+ * rows line up: a row starts at the same y in both columns, however uneven the two stories are.
+ */
 .rp__pair {
   display: grid;
   /* Same clearance as a chapter when the nav jumps to a pair. */
   scroll-margin-top: var(--primitives-padding-12);
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: start;
-  column-gap: var(--primitives-padding-10);
+  /* 1 heading track + 1 per category, set inline from the stories (--rp-rows vs --rp-rows-content). */
+  grid-template-rows: repeat(var(--rp-rows, 4), minmax(0, auto));
+  column-gap: var(--primitives-padding-6);
 }
 
 .rp__cell {
+  display: grid;
   min-width: 0;
   container-type: inline-size;
+  grid-row: span var(--rp-rows, 4);
+  grid-template-rows: subgrid;
 }
 
-.rp__pair > .rp__cell + .rp__cell {
-  border-top: 0;
+/* The list covers every category track; the heading takes the first one. */
+.rp__cell > .rp__rows {
+  display: grid;
+  grid-row: span var(--rp-rows-content, 3);
+  grid-template-rows: subgrid;
 }
 
 
@@ -736,6 +763,15 @@ watch(activeId, async () => {
   width: 100%;
   flex-direction: column;
   gap: var(--primitives-padding-1);
+}
+
+/* Same tokens as the page notes; the small visible label above the evidence table. */
+.rp__evidence-label {
+  margin: 0;
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-xs);
+  font-weight: 500;
+  line-height: var(--primitives-line-heights-2xs);
 }
 
 /*
@@ -833,15 +869,11 @@ watch(activeId, async () => {
 }
 
 /* 5 How to improve */
-/* How to improve is the one card on the page: the steps are what the owner can act on. */
+/* The steps are what the owner can act on, so the card carries the whole section. */
 .rp__improve {
   display: flex;
   flex-direction: column;
   gap: var(--primitives-padding-2);
-  padding: var(--primitives-padding-6) var(--primitives-padding-8);
-  border: var(--primitives-border-width-default) solid var(--component-card-border);
-  border-radius: var(--component-option-card-radius);
-  background: var(--component-card-background);
 }
 
 .rp__steps {
@@ -911,10 +943,22 @@ watch(activeId, async () => {
 @container app-workspace (max-width: 720px) {
   .rp__pair {
     grid-template-columns: minmax(0, 1fr);
+    /* Cards stack: killed row tracks and gap between the cards. */
+    row-gap: var(--primitives-padding-6);
+    grid-template-rows: none;
   }
 
-  .rp__pair > .rp__cell + .rp__cell {
-    border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+  .rp__cell {
+    display: block;
+    grid-row: auto;
+    grid-template-rows: none;
+  }
+
+  .rp__cell > .rp__rows {
+    display: flex;
+    flex-direction: column;
+    grid-row: auto;
+    grid-template-rows: none;
   }
 }
 

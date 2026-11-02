@@ -36,7 +36,7 @@ function valueText(indicator: RiskPulseIndicator) {
 </script>
 
 <template>
-  <div class="indicators">
+  <div class="indicators" :class="{ 'indicators--compact': compact }">
     <table class="indicators__table" :aria-label="label">
       <colgroup>
         <col />
@@ -169,5 +169,19 @@ function valueText(indicator: RiskPulseIndicator) {
   color: var(--semantic-text-ach-color-text-secondary);
   font-size: var(--primitives-font-sizes-xs);
   line-height: var(--primitives-line-heights-2xs);
+}
+
+/*
+ * Evidence mode: the cells sit flush with the sentence above and the row's own padding
+ * provides the separation, so the evidence reads as part of its row, not a stray row.
+ */
+.indicators--compact td {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* The list already names the category above it; the evidence name steps down a tone. */
+.indicators--compact .indicators__name {
+  color: var(--semantic-text-ach-color-text-secondary);
 }
 </style>
