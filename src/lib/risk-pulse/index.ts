@@ -320,6 +320,7 @@ export const verdict = {
 /**
  * Rule-based reading of a highlighted category: how many of its scored indicators are strong
  * (4 or 5) or weak (1 or 2). Computed from the data, so it holds for any company or month.
+ * Empty when the rule makes no claim: no scored indicators, or none of them in the range.
  */
 export function categorySignal(
   categoryName: string,
@@ -331,7 +332,9 @@ export function categorySignal(
     tone === 'strength' ? (indicator.score ?? 0) >= 4 : (indicator.score ?? 0) <= 2,
   ).length
   const range = tone === 'strength' ? '4 or higher' : '2 or lower'
+  if (scored.length === 0 || matching === 0) return ''
   if (scored.length === 1) return `Its only scored indicator scores ${range}.`
+  if (scored.length === 2 && matching === scored.length) return `Both scored indicators score ${range}.`
   if (matching === scored.length) return `All ${matching} scored indicators score ${range}.`
   return `${matching} of ${scored.length} scored indicators ${matching === 1 ? 'scores' : 'score'} ${range}.`
 }
@@ -410,9 +413,28 @@ function hash(text: string) {
 }
 
 /**
+ * Monthly drift for numeric values: deterministic per indicator and month, roughly ±6% around the
+ * base value, and a further step down when that month scores worse. Only decimal values move —
+ * whole counts, days and months (no decimal point in the raw value) stay put, so strings that
+ * quote them keep reading true, and the rules that expect a 0–1 share still get a 0–1 share.
+ */
+function mockNumericValue(indicator: RiskPulseIndicator, monthsBack: number, worse: boolean): string | null {
+  if (indicator.kind !== 'numeric' || indicator.value === null) return null
+  const text = indicator.value.trim()
+  const amount = Number(text)
+  if (text === '' || Number.isNaN(amount) || amount === 0 || !text.includes('.')) return null
+  const noise = ((hash(`${indicator.id}:${monthsBack}`) % 13) - 6) / 100
+  const stepDown = worse ? 0.88 + (hash(indicator.id) % 4) / 20 : 1
+  let next = amount * (1 + noise) * stepDown
+  if (amount > 0 && amount < 1) next = Math.min(next, 1)
+  return String(Math.round(Math.max(0, next) * 1e4) / 1e4)
+}
+
+/**
  * Prototype history, not real data: staging has one month. Earlier months lower a deterministic share
  * of indicators by one point in mid-scoring categories outside the highlights, so the highlights,
- * their stories and the verdict copy hold for every month.
+ * their stories and the verdict copy hold for every month. Their decimal values drift a little from
+ * month to month under the same rule, so the indicator data below the scores follows the month too.
  */
 function mockMonth(monthsBack: number, base: RiskPulseReport = riskPulseReport): RiskPulseReport {
   const pinned = new Set([...topCategories(3, base), ...bottomCategories(3, base)].map((category) => category.name))
@@ -421,15 +443,19 @@ function mockMonth(monthsBack: number, base: RiskPulseReport = riskPulseReport):
       .filter((category) => category.score !== null && category.score >= 3.5 && !pinned.has(category.name))
       .map((category) => category.name),
   )
-  const datapoints = base.datapoints.map((indicator) =>
-    indicator.score !== null &&
-    indicator.value !== null &&
-    indicator.score >= 2 &&
-    eligible.has(indicator.categoryName) &&
-    hash(indicator.id) % 10 < monthsBack
-      ? { ...indicator, score: indicator.score - 1 }
-      : indicator,
-  )
+  const datapoints = base.datapoints.map((indicator) => {
+    const worse =
+      indicator.score !== null &&
+      indicator.value !== null &&
+      indicator.score >= 2 &&
+      eligible.has(indicator.categoryName) &&
+      hash(indicator.id) % 10 < monthsBack
+    const value = (!pinned.has(indicator.categoryName) && indicator.score !== null
+      ? mockNumericValue(indicator, monthsBack, worse)
+      : null) ?? indicator.value
+    if (!worse && value === indicator.value) return indicator
+    return { ...indicator, value, score: worse && indicator.score !== null ? indicator.score - 1 : indicator.score }
+  })
   return rollUp(datapoints, base)
 }
 
