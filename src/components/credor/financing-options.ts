@@ -10,6 +10,9 @@ export interface FinancingOption {
   title: string
   description: FinancingOptionPart[]
   illustration: FinancingOptionIllustration
+  limit: string
+  rate: string
+  icon: string
 }
 
 export const financingOptions: FinancingOption[] = [
@@ -17,25 +20,31 @@ export const financingOptions: FinancingOption[] = [
     id: 'ar',
     title: 'AR Invoice Financing',
     description: [
-      { text: 'Get paid sooner for your unpaid invoices. Up to ' },
+      { text: 'Get paid on your sales invoices Up to ' },
       { text: '5 Billion', strong: true },
       { text: ' with interest as low as ' },
       { text: '1%', strong: true },
       { text: ' per month.' },
     ],
     illustration: 'ar',
+    limit: '5 Billion',
+    rate: 'from 1% / month',
+    icon: '/icons/custom/accounts-receivable.svg',
   },
   {
     id: 'ap',
     title: 'AP Invoice Financing',
     description: [
-      { text: 'Pay suppliers now and repay later. Up to ' },
+      { text: 'Pay suppliers before the due date Up to ' },
       { text: '5 Billion', strong: true },
       { text: ' with interest as low as ' },
       { text: '1%', strong: true },
       { text: ' per month.' },
     ],
     illustration: 'ap',
+    limit: '5 Billion',
+    rate: 'from 1% / month',
+    icon: '/icons/custom/paying-supplier.svg',
   },
   {
     id: 'short-term',
@@ -48,5 +57,8 @@ export const financingOptions: FinancingOption[] = [
       { text: ' per month.' },
     ],
     illustration: 'short-term',
+    limit: '10 Million',
+    rate: '1% / month',
+    icon: '/icons/custom/free-financing-zap.svg',
   },
 ]

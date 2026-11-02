@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import FinancingOptionCard from '@/components/financing/FinancingOptionCard.vue'
+import FinancingOptionShortcut from '@/components/financing/FinancingOptionShortcut.vue'
 import { financingOptions } from '@/components/credor/financing-options'
+import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
+
+// After personalisation the user knows the products: show compact shortcuts, not the explainer cards.
+const { healthVariant } = usePrototypeState()
 </script>
 
 <template>
@@ -11,7 +16,12 @@ import { financingOptions } from '@/components/credor/financing-options'
     </div>
 
     <div class="financing-options__grid">
-      <FinancingOptionCard v-for="option in financingOptions" :key="option.id" :option="option" />
+      <template v-if="healthVariant === 'synced'">
+        <FinancingOptionShortcut v-for="option in financingOptions" :key="option.id" :option="option" />
+      </template>
+      <template v-else>
+        <FinancingOptionCard v-for="option in financingOptions" :key="option.id" :option="option" />
+      </template>
     </div>
   </section>
 </template>
