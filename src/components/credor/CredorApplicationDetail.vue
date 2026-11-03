@@ -35,6 +35,7 @@ const product = computed(
   () => financingProducts[source.value?.productKey ?? tab.value.id] ?? financingProducts.sales,
 )
 const itemTitle = computed(() => (tab.value.itemLabel === 'bills' ? 'Bill' : 'Invoice'))
+const itemArticle = computed(() => (itemTitle.value === 'Bill' ? 'a bill' : 'an invoice'))
 
 /** Open invoices this application can take: the partner's own, or every open one in its tab. */
 const candidates = computed(() => {
@@ -164,8 +165,12 @@ const timeline = computed<TimelineItem[]>(() => [
     <Alert
       v-if="application && showSubmitted"
       status="success"
-      title-text="Application submitted"
-      description-text="We are checking your documents. You will be notified when lenders send offers."
+      :title-text="invoice ? 'Application submitted' : 'Application saved'"
+      :description-text="
+        invoice
+          ? 'We are checking your documents. You will be notified when lenders send offers.'
+          : `Add ${itemArticle} to send it to financing partners.`
+      "
       :has-action="false"
       @dismiss="showSubmitted = false"
     />
@@ -255,32 +260,12 @@ const timeline = computed<TimelineItem[]>(() => [
               </dl>
             </section>
 
-            <section class="application-detail__section" aria-labelledby="supporting-docs-title">
+            <section v-if="invoice" class="application-detail__section" aria-labelledby="supporting-docs-title">
               <div class="application-detail__section-heading">
                 <h2 id="supporting-docs-title">Supporting documents</h2>
-                <p v-if="invoice">Attached automatically from Transaction Hub.</p>
-                <p v-else>Attached automatically once you add {{ itemTitle === 'Bill' ? 'a bill' : 'an invoice' }}.</p>
+                <p>Attached automatically from Transaction Hub.</p>
               </div>
-              <div v-if="!invoice" class="application-detail__add">
-                <span class="application-detail__doc-icon" aria-hidden="true"></span>
-                <span class="application-detail__doc-copy">
-                  <span class="application-detail__doc-label">No {{ itemTitle.toLowerCase() }} yet</span>
-                  <span class="application-detail__doc-file">
-                    Lenders start reviewing once {{ itemTitle === 'Bill' ? 'a bill' : 'an invoice' }} is attached.
-                  </span>
-                </span>
-                <Button
-                  variant="default"
-                  color="primary"
-                  size="small"
-                  type="button"
-                  class="application-detail__button"
-                  @click="openAddInvoice"
-                >
-                  Add {{ itemTitle.toLowerCase() }}
-                </Button>
-              </div>
-              <ul v-if="invoice" class="application-detail__docs">
+              <ul class="application-detail__docs">
                 <li v-for="document in supportingDocuments" :key="document.label" class="application-detail__doc">
                   <span class="application-detail__doc-icon" aria-hidden="true"></span>
                   <span class="application-detail__doc-copy">
@@ -344,21 +329,44 @@ const timeline = computed<TimelineItem[]>(() => [
         <section class="application-detail__card application-detail__side-card" aria-labelledby="status-title">
           <div class="application-detail__card-header">
             <h2 id="status-title">Status</h2>
-            <span class="application-detail__badge application-detail__badge--info">{{ application.status }}</span>
+            <span
+              class="application-detail__badge"
+              :class="invoice ? 'application-detail__badge--info' : 'application-detail__badge--warning'"
+            >
+              {{ application.status }}
+            </span>
           </div>
-          <p class="application-detail__text">
-            We are checking your documents and sending the application to financing partners. This
-            usually takes 1 business day.
-          </p>
-          <div class="application-detail__lenders">
-            <span>Lender offers</span>
-            <span class="application-detail__lenders-count">0</span>
-          </div>
-          <p class="application-detail__hint">Offers appear here with the amount, fees and repayment date.</p>
+          <template v-if="invoice">
+            <p class="application-detail__text">
+              We are checking your documents and sending the application to financing partners. This
+              usually takes 1 business day.
+            </p>
+            <div class="application-detail__lenders">
+              <span>Lender offers</span>
+              <span class="application-detail__lenders-count">0</span>
+            </div>
+            <p class="application-detail__hint">Offers appear here with the amount, fees and repayment date.</p>
+          </template>
+          <template v-else>
+            <p class="application-detail__text">
+              Your application is saved but not sent yet. Lenders only review it once
+              {{ itemArticle }} is attached.
+            </p>
+            <Button
+              variant="default"
+              color="primary"
+              size="default"
+              type="button"
+              class="application-detail__button application-detail__add"
+              @click="openAddInvoice"
+            >
+              Add {{ itemTitle.toLowerCase() }}
+            </Button>
+          </template>
         </section>
 
         <section
-          v-if="product.needsPaymentAgreement"
+          v-if="product.needsPaymentAgreement && invoice"
           class="application-detail__card application-detail__side-card"
           aria-labelledby="agreement-title"
         >
@@ -629,12 +637,7 @@ const timeline = computed<TimelineItem[]>(() => [
 }
 
 .application-detail__add {
-  display: flex;
-  align-items: center;
-  gap: var(--primitives-padding-3);
-  padding: var(--primitives-padding-4);
-  border: var(--primitives-border-width-default) dashed var(--semantic-border-ach-color-border-strong);
-  border-radius: var(--primitives-border-radius-lg);
+  width: 100%;
 }
 
 .application-detail__doc-icon {

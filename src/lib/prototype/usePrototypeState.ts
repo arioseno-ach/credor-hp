@@ -169,6 +169,7 @@ export function usePrototypeState() {
             amount: invoice.amount,
             note: `${number} attached`,
             noteTone: 'default',
+            status: 'In Review',
             details: item.details.map((detail) =>
               detail.label === 'Invoice' ? { ...detail, value: number } : detail,
             ),

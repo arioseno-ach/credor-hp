@@ -295,7 +295,7 @@ function submit() {
         date: now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }),
         note: invoice ? `${invoiceNumber} attached` : 'No Invoice Selected',
         noteTone: invoice ? 'default' : 'error',
-        status: 'In Review',
+        status: invoice ? 'In Review' : tab.value.itemLabel === 'bills' ? 'Bill needed' : 'Invoice needed',
         details: [
           { label: 'Invoice', value: invoice ? invoiceNumber : 'None selected' },
           { label: 'Payment Date', value: 'Still in review' },

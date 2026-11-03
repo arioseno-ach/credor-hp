@@ -15,7 +15,7 @@ const completeApplications = [
     date: '21 Okt',
     note: 'No Invoice Selected',
     noteTone: 'error' as const,
-    status: 'In Review',
+    status: 'Invoice needed',
     details: [
       { label: 'Invoice', value: 'None selected' },
       { label: 'Payment Date', value: 'Still in review' },
