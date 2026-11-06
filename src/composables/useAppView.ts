@@ -14,6 +14,7 @@ export type AppView =
   | { name: 'apply'; entry: ApplyEntry }
   | { name: 'application'; id: string; justSubmitted: boolean }
   | { name: 'risk-pulse' }
+  | { name: 'transactions'; tabId: string }
 
 const view = ref<AppView>({ name: 'home' })
 
@@ -35,6 +36,11 @@ export function useAppView() {
 
   function openApplication(id: string, justSubmitted = false) {
     view.value = { name: 'application', id, justSubmitted }
+    window.scrollTo({ top: 0 })
+  }
+
+  function openTransactions(tabId: string) {
+    view.value = { name: 'transactions', tabId }
     window.scrollTo({ top: 0 })
   }
 
@@ -62,5 +68,5 @@ export function useAppView() {
     heading?.focus({ preventScroll: true })
   }
 
-  return { view, openApply, openApplication, openRiskPulse, goHome }
+  return { view, openApply, openApplication, openRiskPulse, openTransactions, goHome }
 }

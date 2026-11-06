@@ -4,11 +4,12 @@ import { useSegmentedIndicator } from '@/composables/useSegmentedIndicator'
 import { Button } from '@/components/ui/button'
 import { Avatar } from '@/components/ui/avatar'
 import { credorTransactionTabs, type CredorTransaction } from '@/components/credor/transactions'
+import FinancingInvoiceEmptyState from '@/components/credor/financing-submit/FinancingInvoiceEmptyState.vue'
 import { useAppView } from '@/composables/useAppView'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 
-const { openApply } = useAppView()
-const { state } = usePrototypeState()
+const { openApply, openTransactions } = useAppView()
+const { state, transactionRows } = usePrototypeState()
 
 const isSubmitted = (id: string) => state.data.submittedInvoiceIds?.includes(id) ?? false
 
@@ -23,7 +24,7 @@ const activeTab = computed(
 
 /** Rows still open for financing. Submitted ones stay listed but leave the totals. */
 const openRows = computed(() =>
-  activeTab.value.rows.filter((row) => !isSubmitted(row.id)),
+  transactionRows(activeTab.value).filter((row) => !isSubmitted(row.id)),
 )
 
 const readyCount = computed(() => openRows.value.length)
@@ -40,7 +41,7 @@ const SHOW_LINE_ITEMS = false
 /** Overdue rows come first, the most overdue on top. The rest follow the tab rule:
  *  the longest cash-out period first for sales, the nearest due date first for purchases. */
 const sortedRows = computed(() => {
-  const rows = [...activeTab.value.rows]
+  const rows = [...transactionRows(activeTab.value)]
   const byTabRule = (a: CredorTransaction, b: CredorTransaction) =>
     activeTab.value.sortBy === 'longest-wait'
       ? b.dueOn.localeCompare(a.dueOn)
@@ -94,11 +95,23 @@ const initials = (name: string) => {
     <div class="transactions__heading">
       <div class="transactions__intro">
         <h2 id="transactions-title">
-          {{ readyCount > 0 ? subtitle.title : `All ${activeTab.itemLabel} are submitted for financing` }}
+          {{
+            sortedRows.length === 0
+              ? `No ${activeTab.itemLabel} yet`
+              : readyCount > 0
+                ? subtitle.title
+                : `All ${activeTab.itemLabel} are submitted for financing`
+          }}
         </h2>
       </div>
 
-      <button v-if="sortedRows.length > VISIBLE_ROWS" type="button" class="transactions__view-all">
+      <button
+        v-if="sortedRows.length > VISIBLE_ROWS"
+        id="transactions-see-all"
+        type="button"
+        class="transactions__view-all"
+        @click="openTransactions(activeTabId)"
+      >
         See All
       </button>
     </div>
@@ -142,7 +155,8 @@ const initials = (name: string) => {
           role="tabpanel"
           :aria-labelledby="'transactions-tab-' + activeTabId"
         >
-          <div class="transactions__rows">
+          <FinancingInvoiceEmptyState v-if="sortedRows.length === 0" :item-label="activeTab.itemLabel" />
+          <div v-else class="transactions__rows">
             <article
               v-for="row in visibleRows"
               :key="row.id"

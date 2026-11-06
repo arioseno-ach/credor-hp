@@ -36,7 +36,7 @@ interface SearchItem {
 
 const { openApply } = useAppView()
 const { open: openLoanSimulation } = useLoanSimulation()
-const { state } = usePrototypeState()
+const { state, transactionRows } = usePrototypeState()
 const { show: showSnackbar } = useSnackbar()
 
 const trigger = ref<HTMLButtonElement | null>(null)
@@ -90,7 +90,7 @@ const items = computed<SearchItem[]>(() => [
     run: () => openApply({ kind: 'partner', partnerId: partner.id }),
   })),
   ...credorTransactionTabs.flatMap((tab) =>
-    tab.rows
+    transactionRows(tab)
       .filter((row) => !state.data.submittedInvoiceIds?.includes(row.id))
       .map((row) => ({
         id: row.id,

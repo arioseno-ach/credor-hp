@@ -17,6 +17,8 @@ const props = defineProps<{
   label: string
   /** Evidence mode: name and value only, no score column, no paging. */
   compact?: boolean
+  /** Show the engine's indicator names instead of the plain-language ones. */
+  originalNames?: boolean
 }>()
 
 const page = ref(1)
@@ -53,7 +55,7 @@ function valueText(indicator: RiskPulseIndicator) {
       <tbody>
         <tr v-for="indicator in visible" :key="indicator.id">
           <td>
-            <span class="indicators__name">{{ indicatorLabel(indicator) }}</span>
+            <span class="indicators__name">{{ props.originalNames ? indicator.name : indicatorLabel(indicator) }}</span>
             <span v-if="goodHint(indicator)" class="indicators__hint">{{ goodHint(indicator) }}</span>
           </td>
           <td

@@ -189,9 +189,9 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
 
 .risk-card__header h2 {
   margin: 0;
-  font-size: var(--primitives-font-sizes-md);
+  font-size: var(--primitives-font-sizes-sm);
   font-weight: 400;
-  line-height: var(--primitives-line-heights-md);
+  line-height: var(--primitives-line-heights-sm);
 }
 
 .risk-card__logo {

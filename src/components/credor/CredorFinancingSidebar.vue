@@ -28,10 +28,7 @@ const { share } = useShareLink()
           <p>Simulate first your monthly payment</p>
         </div>
       </div>
-      <button type="button" class="sidebar-link simulation-card__action" @click="open()">
-        Start Simulation
-        <span class="sidebar-link__arrow" aria-hidden="true"></span>
-      </button>
+      <button type="button" class="simulation-card__action" aria-label="Start Simulation" @click="open()"></button>
     </section>
 
     <section class="contact-card" aria-label="Contact and sharing options">
@@ -69,15 +66,6 @@ const { share } = useShareLink()
   background: var(--component-card-background);
 }
 
-.sidebar-link__arrow {
-  width: var(--primitives-padding-3);
-  height: var(--primitives-padding-3);
-  flex: 0 0 var(--primitives-padding-3);
-  background: currentColor;
-  mask: url('/icons/ui-actions/arrow-forward.svg') center / contain no-repeat;
-  -webkit-mask: url('/icons/ui-actions/arrow-forward.svg') center / contain no-repeat;
-}
-
 .simulation-card {
   position: relative;
   isolation: isolate;
@@ -85,6 +73,22 @@ const { share } = useShareLink()
   align-items: center;
   gap: var(--primitives-padding-3);
   padding: var(--primitives-padding-3) var(--primitives-padding-4);
+}
+
+/* One stretched control covers the whole card, so the card itself is the click target. */
+.simulation-card__action {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  border: 0;
+  border-radius: var(--primitives-border-radius-lg);
+  background: none;
+  cursor: pointer;
+}
+
+.simulation-card__action:focus-visible {
+  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline-offset: var(--primitives-border-width-2);
 }
 
 .simulation-card::before {
@@ -194,49 +198,6 @@ const { share } = useShareLink()
 .sidebar-link--button:focus-visible {
   outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
   outline-offset: var(--primitives-border-width-2);
-}
-
-.simulation-card > .sidebar-link {
-  position: absolute;
-  right: var(--primitives-padding-4);
-  top: 50%;
-  z-index: 1;
-  padding: var(--primitives-padding-1) var(--primitives-padding-3);
-  border-radius: var(--primitives-border-radius-infinite);
-  background: var(--component-card-background);
-  color: var(--semantic-text-ach-color-text-default);
-  font-family: var(--primitives-font-families-display), sans-serif;
-  font-size: var(--primitives-font-sizes-2xs);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-4xs);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-50%);
-  transition: opacity 150ms ease;
-  box-shadow:
-    calc(var(--primitives-shadows-sm-shadow-1-x) * 1px)
-      calc(var(--primitives-shadows-sm-shadow-1-y) * 1px)
-      calc(var(--primitives-shadows-sm-shadow-1-blur) * 1px)
-      var(--primitives-shadows-sm-color),
-    calc(var(--primitives-shadows-sm-shadow-2-x) * 1px)
-      calc(var(--primitives-shadows-sm-shadow-2-y) * 1px)
-      calc(var(--primitives-shadows-sm-shadow-2-blur) * 1px)
-      var(--primitives-shadows-sm-color);
-}
-
-.simulation-card:hover > .sidebar-link,
-.simulation-card:focus-within > .sidebar-link {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.simulation-card::before {
-  transition: opacity 150ms ease;
-}
-
-.simulation-card:hover::before,
-.simulation-card:focus-within::before {
-  opacity: 0;
 }
 
 .contact-card {

@@ -4,6 +4,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/ui/button'
 import { verifiedCompany } from '@/components/credor/personalisation'
 import { useAppView } from '@/composables/useAppView'
+import { useSnackbar } from '@/composables/useSnackbar'
 import { companyHealthCategories } from '@/lib/company-health'
 import {
   areaLabelForLayerName,
@@ -14,6 +15,8 @@ import {
   evidenceFor,
   formatDelta,
   getAreas,
+  originalAreaLabel,
+  sortMacroToMicro,
   improvementSteps,
   indicatorsFor,
   isInternalCheck,
@@ -30,6 +33,16 @@ import RiskIndicatorList from './RiskIndicatorList.vue'
 import RiskScoreHead from './RiskScoreHead.vue'
 
 const { goHome, openApply } = useAppView()
+const { show } = useSnackbar()
+
+/** The support channel is outside this prototype, so the action only says where it leads. */
+function contactUs() {
+  show({
+    variant: 'neutral',
+    title: 'Opens Talk to us',
+    description: 'Contacting the Credor team is not part of this prototype.',
+  })
+}
 
 /** Prototype report, rewritten on the same 1 to 5 baseline as this page. */
 const reportUrl = `${import.meta.env.BASE_URL}reports/risk-pulse-report-demo.html`
@@ -45,7 +58,7 @@ const report = computed(() => month.value.report)
 
 const overall = computed(() => report.value.overall)
 const counts = computed(() => coverage(report.value))
-const areas = computed(() => getAreas(report.value))
+const areas = computed(() => sortMacroToMicro(getAreas(report.value)))
 
 // Band index, not label: the loan simulator still names its bands in Bahasa.
 const band = computed(() => scoreBand(overall.value))
@@ -335,7 +348,7 @@ watch(activeId, async () => {
         <AccordionItem v-for="area in areas" :key="area.id" :value="area.id">
           <AccordionTrigger>
             <RiskScoreHead
-              :title="area.label"
+              :title="originalAreaLabel(area.name)"
               :score="area.score"
               :delta="areaDelta(area.id)"
               :delta-label="previousMonth?.label.split(' ')[0]"
@@ -345,7 +358,7 @@ watch(activeId, async () => {
             <ul class="rp__rows rp__rows--nested">
               <li v-for="category in area.categories" :key="category.id">
                 <RiskFactorRow
-                  :title="categoryLabel(category.name)"
+                  :title="category.name"
                   :meta="category.score === null ? 'Not counted in your score' : undefined"
                   :score="category.score"
                   :bar="false"
@@ -373,7 +386,8 @@ watch(activeId, async () => {
                     >
                       <RiskIndicatorList
                         :indicators="indicatorsFor(category.name, report)"
-                        :label="`Indicators in ${categoryLabel(category.name)}`"
+                        :label="`Indicators in ${category.name}`"
+                        original-names
                       />
                     </div>
                   </template>
@@ -397,6 +411,15 @@ watch(activeId, async () => {
             </div>
           </li>
         </ol>
+        <div class="rp__contact">
+          <div class="rp__contact-copy">
+            <p class="rp__step-title">Need help improving your score?</p>
+            <p class="rp__text">Our team can walk you through the steps that fit your business.</p>
+          </div>
+          <Button variant="outline" color="neutral" type="button" class="rp__contact-action" @click="contactUs">
+            Contact us
+          </Button>
+        </div>
       </div>
     </section>
 
@@ -874,6 +897,34 @@ watch(activeId, async () => {
   display: flex;
   flex-direction: column;
   gap: var(--primitives-padding-2);
+}
+
+.rp__contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--primitives-padding-3) var(--primitives-padding-4);
+  margin-top: var(--primitives-padding-5);
+  padding-top: var(--primitives-padding-5);
+  border-top: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+}
+
+.rp__contact-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: var(--primitives-padding-1);
+}
+
+.rp__contact-copy p {
+  margin: 0;
+}
+
+.rp__contact-action:deep(.ach-button),
+.rp__contact-action.ach-button {
+  border-radius: var(--primitives-border-radius-infinite);
 }
 
 .rp__steps {

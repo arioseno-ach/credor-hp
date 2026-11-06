@@ -88,6 +88,19 @@ export const areaNames: Record<string, string> = {
   'value-chain': 'Industry & market position',
 }
 
+/** Breakdown order, as set in the Risk Pulse admin (Layer and Category). */
+const macroToMicro = ['portfolio', 'value-chain', 'trade-network', 'borrower', 'transaction']
+
+/** The engine's layer name in title case, e.g. "TRADE NETWORK" becomes "Trade Network". */
+export function originalAreaLabel(layerName: string): string {
+  return layerName.toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase())
+}
+
+export function sortMacroToMicro<T extends { id: string }>(areas: T[]): T[] {
+  const rank = (id: string) => (macroToMicro.includes(id) ? macroToMicro.indexOf(id) : macroToMicro.length)
+  return [...areas].sort((a, b) => rank(a.id) - rank(b.id))
+}
+
 export interface RiskArea extends RiskPulseLayer {
   label: string
   categories: RiskPulseCategory[]

@@ -118,6 +118,11 @@ export function usePrototypeState() {
 
   const showTransactions = computed(() => state.modules.transactions)
 
+  /** Rows a tab shows. The purchases tab is empty while its demo toggle is on. */
+  function transactionRows<T>(tab: { id: string; rows: T[] }): T[] {
+    return state.modules.purchasesEmpty && tab.id === 'purchases' ? [] : tab.rows
+  }
+
   /** Stage that decides which financing documents are on file. Prefilled acts like a complete profile. */
   const documentStage = computed<PrototypeStage>(() =>
     state.prefilledDocuments ? 'complete' : state.stage,
@@ -133,7 +138,8 @@ export function usePrototypeState() {
     syncStorage()
   }
 
-  function toggleModule(module: 'partners' | 'transactions'): void {
+  function toggleModule(module: 'partners' | 'transactions' | 'purchasesEmpty'): void {
+    if (module === 'purchasesEmpty') state.modules.purchasesEmpty = !state.modules.purchasesEmpty
     if (module === 'partners') state.modules.partners = !state.modules.partners
     if (module === 'transactions') state.modules.transactions = !state.modules.transactions
     syncStorage()
@@ -194,6 +200,7 @@ export function usePrototypeState() {
     showLoanSimulationInSidebar,
     setStage,
     toggleModule,
+    transactionRows,
     togglePrefilledDocuments,
     submitApplication,
     attachInvoice,

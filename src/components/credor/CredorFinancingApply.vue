@@ -26,7 +26,7 @@ const props = defineProps<{
   entry: ApplyEntry
 }>()
 
-const { state, documentStage, submitApplication } = usePrototypeState()
+const { state, documentStage, submitApplication, transactionRows } = usePrototypeState()
 
 /** Resuming personalisation starts from the Default documents, even with prefilled documents on. */
 const fileStage = computed(() =>
@@ -60,7 +60,7 @@ const categories = computed(() => documentCategoriesFor(productKey.value))
 /** Invoices the user can pick: the partner's own, or every open one in the tab for a product card. */
 const candidates = computed<CredorTransaction[]>(() => {
   const submitted = state.data.submittedInvoiceIds ?? []
-  const rows = partner.value ? partner.value.invoices : tab.value.rows
+  const rows = partner.value ? partner.value.invoices : transactionRows(tab.value)
   return rows
     .filter((row) => !submitted.includes(row.id))
     .sort((a, b) => a.dueOn.localeCompare(b.dueOn))

@@ -50,6 +50,8 @@ export interface PrototypeState {
   modules: {
     partners: boolean
     transactions: boolean
+    /** Demo shortcut: the purchases tab has no bills, whatever the data holds. */
+    purchasesEmpty?: boolean
   }
   data: {
     balance: number

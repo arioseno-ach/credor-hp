@@ -3,7 +3,7 @@ import { computed, ref, watch } from 'vue'
 import type { StyleValue } from 'vue'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import type { CredorTransaction } from '@/components/credor/transactions'
 import { formatRupiah } from '@/lib/loan-calculator'
 import FinancingInvoiceEmptyState from './FinancingInvoiceEmptyState.vue'
@@ -27,10 +27,11 @@ const selectedId = ref<string | null>(null)
 const attaching = ref(false)
 const itemName = computed(() => props.itemLabel.replace(/s$/, ''))
 
-const dialogStyle: StyleValue = {
-  width: 'min(calc(100% - 2rem), 640px)',
+const sheetStyle: StyleValue = {
+  width: '100%',
   maxWidth: '640px',
   padding: '0',
+  gap: '0',
 }
 
 const initials = (name: string) =>
@@ -76,9 +77,9 @@ watch(open, (value) => {
 </script>
 
 <template>
-  <Dialog v-model:open="open">
-    <DialogContent
-      :style="dialogStyle"
+  <Sheet v-model:open="open">
+    <SheetContent
+      :style="sheetStyle"
       :show-close="false"
       class="add-invoice"
       @close-auto-focus="restoreFocus"
@@ -87,12 +88,12 @@ watch(open, (value) => {
     >
       <header class="add-invoice__header">
         <div class="add-invoice__title-group">
-          <DialogTitle class="add-invoice__title">Add {{ itemName }}</DialogTitle>
-          <DialogDescription class="add-invoice__description">
+          <SheetTitle class="add-invoice__title">Add {{ itemName }}</SheetTitle>
+          <SheetDescription class="add-invoice__description">
             <template v-if="partnerName">Open {{ itemLabel }} to {{ partnerName }}.</template>
             <template v-else>Open {{ itemLabel }} recorded in Achilles.</template>
             Its documents are attached automatically.
-          </DialogDescription>
+          </SheetDescription>
         </div>
         <button
           type="button"
@@ -132,7 +133,12 @@ watch(open, (value) => {
             </span>
           </template>
           <template v-else>
-            <Avatar :initials="initials(row.counterparty)" />
+            <Avatar
+              :initials="initials(row.counterparty)"
+              verified
+              variant="inverse"
+              :label="`${row.counterparty}, verified partner`"
+            />
             <span class="add-invoice__identity">
               <span class="add-invoice__name">{{ row.counterparty }}</span>
               <span class="add-invoice__meta">{{ row.invoiceNumber }}</span>
@@ -176,8 +182,8 @@ watch(open, (value) => {
           {{ attaching ? 'Adding…' : `Add ${itemName}` }}
         </Button>
       </footer>
-    </DialogContent>
-  </Dialog>
+    </SheetContent>
+  </Sheet>
 </template>
 
 <style scoped>
@@ -193,7 +199,8 @@ watch(open, (value) => {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--primitives-padding-3);
-  padding: var(--primitives-padding-4);
+  padding: var(--primitives-padding-4) var(--primitives-padding-6);
+  border-bottom: var(--primitives-border-width-default) solid var(--component-card-border);
 }
 
 .add-invoice__title-group {
@@ -248,11 +255,13 @@ watch(open, (value) => {
 
 .add-invoice__list {
   display: flex;
-  max-height: 360px;
+  min-height: 0;
+  flex: 1 1 auto;
   flex-direction: column;
-  margin: 0 var(--primitives-padding-4);
+  margin: var(--primitives-padding-4) var(--primitives-padding-6);
   padding: 0;
   overflow-y: auto;
+  align-self: stretch;
   border: var(--primitives-border-width-default) solid var(--component-card-border);
   border-radius: var(--primitives-border-radius-lg);
 }
@@ -339,7 +348,8 @@ watch(open, (value) => {
   display: flex;
   justify-content: flex-end;
   gap: var(--primitives-padding-2);
-  padding: var(--primitives-padding-4);
+  padding: var(--primitives-padding-4) var(--primitives-padding-6);
+  border-top: var(--primitives-border-width-default) solid var(--component-card-border);
 }
 
 .add-invoice__action:deep(.ach-button),
