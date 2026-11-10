@@ -182,8 +182,8 @@ function valueText(indicator: RiskPulseIndicator) {
   padding-bottom: 0;
 }
 
-/* The list already names the category above it; the evidence name steps down a tone. */
+/* Evidence is the answer under a small label, so the name leads and the hint stays quiet. */
 .indicators--compact .indicators__name {
-  color: var(--semantic-text-ach-color-text-secondary);
+  font-weight: 500;
 }
 </style>

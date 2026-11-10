@@ -344,6 +344,7 @@ watch(activeId, async () => {
 
     <section :id="chapters[2].id" class="rp__chapter rp__card" aria-labelledby="rp-breakdown-title">
       <h2 id="rp-breakdown-title" class="rp__h2" tabindex="-1">{{ chapters[2].label }}</h2>
+      <div class="rp__breakdown">
       <Accordion type="multiple">
         <AccordionItem v-for="area in areas" :key="area.id" :value="area.id">
           <AccordionTrigger>
@@ -397,6 +398,7 @@ watch(activeId, async () => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      </div>
     </section>
 
     <section :id="chapters[3].id" class="rp__chapter rp__card" aria-labelledby="rp-improve-title">
@@ -785,7 +787,7 @@ watch(activeId, async () => {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: var(--primitives-padding-1);
+  gap: var(--primitives-padding-2);
 }
 
 /* Same tokens as the page notes; the small visible label above the evidence table. */
@@ -795,6 +797,11 @@ watch(activeId, async () => {
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 500;
   line-height: var(--primitives-line-heights-2xs);
+}
+
+/* A container, so the area rows stack on a phone like the highlight rows do. */
+.rp__breakdown {
+  container-type: inline-size;
 }
 
 /*
