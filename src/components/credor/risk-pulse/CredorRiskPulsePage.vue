@@ -18,8 +18,6 @@ import {
   originalAreaLabel,
   sortMacroToMicro,
   improvementSteps,
-  indicatorsFor,
-  isInternalCheck,
   riskPulseMonths,
   scoreBand,
   scoreBandIndex,
@@ -27,6 +25,7 @@ import {
   topCategories,
   verdict,
 } from '@/lib/risk-pulse'
+import RiskAreaTable from './RiskAreaTable.vue'
 import RiskFactorRow from './RiskFactorRow.vue'
 import RiskGauge from './RiskGauge.vue'
 import RiskIndicatorList from './RiskIndicatorList.vue'
@@ -109,16 +108,6 @@ const stories = computed(
 
 /** Heading track + one track per category, shared by both cells so matching rows stay level. */
 const pairRows = computed(() => 1 + Math.max(...stories.value.map((story) => story.categories.length)))
-
-// Which categories have their indicator list open.
-const shownIndicators = ref<string[]>([])
-
-function toggleIndicators(categoryId: string) {
-  shownIndicators.value = shownIndicators.value.includes(categoryId)
-    ? shownIndicators.value.filter((id) => id !== categoryId)
-    : [...shownIndicators.value, categoryId]
-}
-
 
 // Sticky chapter nav
 const activeId = ref(chapters[0].id)
@@ -349,52 +338,14 @@ watch(activeId, async () => {
         <AccordionItem v-for="area in areas" :key="area.id" :value="area.id">
           <AccordionTrigger>
             <RiskScoreHead
-              :title="originalAreaLabel(area.name)"
+              :title="area.id === 'portfolio' ? 'Industry' : originalAreaLabel(area.name)"
               :score="area.score"
               :delta="areaDelta(area.id)"
               :delta-label="previousMonth?.label.split(' ')[0]"
             />
           </AccordionTrigger>
           <AccordionContent>
-            <ul class="rp__rows rp__rows--nested">
-              <li v-for="category in area.categories" :key="category.id">
-                <RiskFactorRow
-                  :title="category.name"
-                  :meta="category.score === null ? 'Not counted in your score' : undefined"
-                  :score="category.score"
-                  :bar="false"
-                >
-                  <template
-                    v-if="!isInternalCheck(category.name) && indicatorsFor(category.name, report).length"
-                  >
-                    <button
-                      type="button"
-                      class="rp__toggle"
-                      :aria-expanded="shownIndicators.includes(category.id)"
-                      :aria-controls="
-                        shownIndicators.includes(category.id) ? `rp-indicators-${category.id}` : undefined
-                      "
-                      @click="toggleIndicators(category.id)"
-                    >
-                      {{ shownIndicators.includes(category.id) ? 'Hide indicators' : 'See indicators' }}
-                      ({{ indicatorsFor(category.name, report).length }})
-                      <span class="rp__toggle-icon" aria-hidden="true"></span>
-                    </button>
-                    <div
-                      v-if="shownIndicators.includes(category.id)"
-                      :id="`rp-indicators-${category.id}`"
-                      class="rp__indicators"
-                    >
-                      <RiskIndicatorList
-                        :indicators="indicatorsFor(category.name, report)"
-                        :label="`Indicators in ${category.name}`"
-                        original-names
-                      />
-                    </div>
-                  </template>
-                </RiskFactorRow>
-              </li>
-            </ul>
+            <RiskAreaTable :area="area" :report="report" />
           </AccordionContent>
         </AccordionItem>
       </Accordion>
@@ -485,8 +436,7 @@ watch(activeId, async () => {
 }
 
 .rp__back-icon,
-.rp__download-icon,
-.rp__toggle-icon {
+.rp__download-icon {
   width: var(--primitives-padding-4);
   height: var(--primitives-padding-4);
   flex: 0 0 var(--primitives-padding-4);
@@ -605,12 +555,6 @@ watch(activeId, async () => {
 .rp__nav-link:focus-visible {
   outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
   outline-offset: calc(-1 * var(--primitives-border-width-2));
-}
-
-/* The toggle has room around it (list padding), so its ring can sit outside. */
-.rp__toggle:focus-visible {
-  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
-  outline-offset: var(--primitives-border-width-2);
 }
 
 .rp__title:focus,
@@ -804,98 +748,12 @@ watch(activeId, async () => {
   container-type: inline-size;
 }
 
-/*
- * Category rows sit under an area row: indented and without a bar, so the levels read
- * area, then category, then indicator. The right padding matches the area's chevron so scores line up.
- */
-.rp__rows--nested {
-  padding-right: calc(var(--component-accordion-icon-size) + var(--component-accordion-header-gap));
-  padding-left: var(--primitives-padding-8);
-}
-
-/*
- * Tree connectors: a line runs down from the area and branches, with a rounded elbow,
- * to each category title. The branch meets the title's first line at its middle.
- */
-/* Tighter than area rows, and no dividers: the tree connector already groups them. */
-.rp__rows--nested > li {
-  --rp-branch-y: calc(var(--primitives-padding-3) + var(--primitives-line-heights-sm) / 2);
-
-  position: relative;
-  padding-block: var(--primitives-padding-3);
-}
-
-.rp__rows--nested > li + li {
-  border-top: 0;
-}
-
-.rp__rows--nested > li:first-child {
-  --rp-branch-y: calc(var(--primitives-padding-2) + var(--primitives-line-heights-sm) / 2);
-
-  padding-top: var(--primitives-padding-2);
-}
-
-.rp__rows--nested > li::before,
-.rp__rows--nested > li:not(:last-child)::after {
-  position: absolute;
-  top: 0;
-  left: calc(var(--primitives-padding-6) * -1);
-  border-left: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-default);
-  content: '';
-}
-
-.rp__rows--nested > li::before {
-  width: calc(var(--primitives-padding-6) - var(--primitives-padding-2));
-  height: var(--rp-branch-y);
-  border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-default);
-  border-bottom-left-radius: var(--primitives-border-radius-md);
-}
-
-.rp__rows--nested > li:not(:last-child)::after {
-  bottom: 0;
-}
-
-.rp__rows--nested > li:last-child {
-  padding-bottom: var(--primitives-padding-2);
-}
-
-.rp__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--primitives-padding-1);
-  /* No side padding: the text lines up with the title above and the table below. */
-  padding: var(--primitives-padding-1) 0;
-  border: 0;
-  border-radius: var(--primitives-border-radius-xs);
-  background: none;
-  /* Dark and underlined, not link blue: it repeats on every category row but must stay easy to see. */
-  color: var(--semantic-text-ach-color-text-default);
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-  font-family: inherit;
-  font-size: var(--primitives-font-sizes-xs);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-2xs);
-}
-
-.rp__toggle:hover {
-  text-decoration-thickness: 2px;
-}
-
-.rp__toggle-icon {
-  mask: url('/icons/ui-actions/expand-more.svg') center / contain no-repeat;
-  -webkit-mask: url('/icons/ui-actions/expand-more.svg') center / contain no-repeat;
-  transition: transform 150ms ease-out;
-}
-
-.rp__toggle[aria-expanded='true'] .rp__toggle-icon {
-  transform: rotate(180deg);
-}
-
-.rp__indicators {
-  width: 100%;
+/* The hover pill reaches past the text on both sides, so the row text stays aligned with the card. */
+.rp__breakdown :deep(.ach-accordion-trigger) {
+  width: calc(100% + var(--primitives-padding-8));
+  margin-inline: calc(var(--primitives-padding-4) * -1);
+  padding-inline: var(--primitives-padding-4);
+  border-radius: var(--primitives-border-radius-lg);
 }
 
 /* 5 How to improve */
@@ -1035,12 +893,6 @@ watch(activeId, async () => {
     width: 100%;
     max-width: 280px;
     margin-inline: auto;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rp__toggle-icon {
-    transition: none;
   }
 }
 </style>

@@ -143,6 +143,7 @@ export const categoryNames: Record<string, string> = {
   'Supplier base': 'Supplier base',
   'Industry risk and outlook': 'Industry outlook',
   'Margin and working-capital economics': 'Margins and working capital',
+  'Value added and working-capital economics': 'Value added and working capital',
   'Product and market mix': 'Product and market mix',
   'Seasonality and demand pattern': 'Seasonal demand',
   'Trade role and chain position': 'Role in the supply chain',

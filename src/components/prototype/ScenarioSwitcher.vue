@@ -89,6 +89,15 @@ const activeStageLabel = computed(
         <label class="scenario-bar__toggle">
           <input
             type="checkbox"
+            :checked="!!state.modules.salesEmpty"
+            @change="toggleModule('salesEmpty')"
+          />
+          <span>Sales kosong</span>
+        </label>
+
+        <label class="scenario-bar__toggle">
+          <input
+            type="checkbox"
             :checked="!!state.modules.purchasesEmpty"
             @change="toggleModule('purchasesEmpty')"
           />

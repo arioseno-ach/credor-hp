@@ -118,9 +118,11 @@ export function usePrototypeState() {
 
   const showTransactions = computed(() => state.modules.transactions)
 
-  /** Rows a tab shows. The purchases tab is empty while its demo toggle is on. */
+  /** Rows a tab shows. The purchases and sales tabs are empty while their demo toggles are on. */
   function transactionRows<T>(tab: { id: string; rows: T[] }): T[] {
-    return state.modules.purchasesEmpty && tab.id === 'purchases' ? [] : tab.rows
+    if (state.modules.purchasesEmpty && tab.id === 'purchases') return []
+    if (state.modules.salesEmpty && tab.id === 'sales') return []
+    return tab.rows
   }
 
   /** Stage that decides which financing documents are on file. Prefilled acts like a complete profile. */
@@ -138,8 +140,9 @@ export function usePrototypeState() {
     syncStorage()
   }
 
-  function toggleModule(module: 'partners' | 'transactions' | 'purchasesEmpty'): void {
+  function toggleModule(module: 'partners' | 'transactions' | 'purchasesEmpty' | 'salesEmpty'): void {
     if (module === 'purchasesEmpty') state.modules.purchasesEmpty = !state.modules.purchasesEmpty
+    if (module === 'salesEmpty') state.modules.salesEmpty = !state.modules.salesEmpty
     if (module === 'partners') state.modules.partners = !state.modules.partners
     if (module === 'transactions') state.modules.transactions = !state.modules.transactions
     syncStorage()

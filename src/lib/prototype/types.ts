@@ -52,6 +52,8 @@ export interface PrototypeState {
     transactions: boolean
     /** Demo shortcut: the purchases tab has no bills, whatever the data holds. */
     purchasesEmpty?: boolean
+    /** Demo shortcut: the sales tab has no invoices, whatever the data holds. */
+    salesEmpty?: boolean
   }
   data: {
     balance: number
