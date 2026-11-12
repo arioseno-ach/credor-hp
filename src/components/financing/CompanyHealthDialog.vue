@@ -22,7 +22,7 @@ const dialogStyle: StyleValue = {
 
 const benefits = [
   'See your business health score instantly, at no cost.',
-  'A strong profile improves your chance of financing rates starting from 1%.',
+  'A strong profile improves your chance of financing rates starting from 1% per month.',
   'Find areas to improve before you apply.',
 ]
 
