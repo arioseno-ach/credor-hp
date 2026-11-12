@@ -8,6 +8,7 @@ import type {
   PrototypeStage,
   PrototypeState,
   PrototypeStateOverride,
+  RiskPulseView,
 } from './types'
 
 const STORAGE_KEY = 'ach-prototype-state'
@@ -140,11 +141,24 @@ export function usePrototypeState() {
     syncStorage()
   }
 
-  function toggleModule(module: 'partners' | 'transactions' | 'purchasesEmpty' | 'salesEmpty'): void {
+  function toggleModule(
+    module: 'partners' | 'transactions' | 'purchasesEmpty' | 'salesEmpty' | 'summaryDown',
+  ): void {
     if (module === 'purchasesEmpty') state.modules.purchasesEmpty = !state.modules.purchasesEmpty
+    if (module === 'summaryDown') state.modules.summaryDown = !state.modules.summaryDown
     if (module === 'salesEmpty') state.modules.salesEmpty = !state.modules.salesEmpty
     if (module === 'partners') state.modules.partners = !state.modules.partners
     if (module === 'transactions') state.modules.transactions = !state.modules.transactions
+    syncStorage()
+  }
+
+  function setRiskPulse(view: RiskPulseView): void {
+    state.modules.riskPulse = view
+    syncStorage()
+  }
+
+  function setScoreTier(tier: 'auto' | 'low' | 'mid' | 'high'): void {
+    state.modules.scoreTier = tier
     syncStorage()
   }
 
@@ -203,6 +217,8 @@ export function usePrototypeState() {
     showLoanSimulationInSidebar,
     setStage,
     toggleModule,
+    setRiskPulse,
+    setScoreTier,
     transactionRows,
     togglePrefilledDocuments,
     submitApplication,

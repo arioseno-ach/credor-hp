@@ -15,7 +15,7 @@ withDefaults(
 
 <template>
   <div class="factor">
-    <RiskScoreHead :title="title" :meta="meta" :score="score" :bar="bar" />
+    <RiskScoreHead :title="title" :meta="meta" :score="score" :bar="bar" :chip-start="!meta" />
     <div v-if="$slots.default" class="factor__body">
       <slot />
     </div>

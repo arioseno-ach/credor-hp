@@ -27,7 +27,7 @@ const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
 const { view } = useAppView()
 const mobileNavOpen = computed(() => isMobile.value && openMobile.value)
 
-const { bannerVariant, showAlert, showPartners, showTransactions, showLoanSimulationInMain } =
+const { state, bannerVariant, showAlert, showPartners, showTransactions, showLoanSimulationInMain } =
   usePrototypeState()
 
 function closeMobileNav() {
@@ -55,7 +55,7 @@ function closeMobileNav() {
         <CredorTransactionsPage :key="view.tabId" :tab-id="view.tabId" />
       </main>
       <main v-else-if="view.name === 'risk-pulse'" class="app-content">
-        <CredorRiskPulsePage />
+        <CredorRiskPulsePage :key="state.modules.riskPulse ?? 'ready'" />
       </main>
       <main v-else class="app-content">
         <CredorOverviewHeader />

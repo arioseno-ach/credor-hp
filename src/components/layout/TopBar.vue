@@ -77,7 +77,10 @@ const emit = defineEmits<{
 
 <style scoped>
 .topbar {
-  position: relative;
+  /* Stays at the top while the page scrolls; a page's own sticky bar pins just below it. */
+  position: sticky;
+  z-index: 3;
+  top: 0;
   box-sizing: border-box;
   width: 100%;
   height: var(--component-topbar-height);

@@ -15,6 +15,8 @@ const props = withDefaults(defineProps<{
   deltaLabel?: string
   /** Area rows carry the band scale; category rows inside an area leave it out. */
   bar?: boolean
+  /** With no second line, the chip sits under the title on narrow rows instead of floating right on its own line. */
+  chipStart?: boolean
 }>(), { bar: true })
 
 const marker = computed(() =>
@@ -24,7 +26,7 @@ const marker = computed(() =>
 
 <template>
   <!-- Spans only, so the head can sit inside an accordion trigger button. -->
-  <span class="head" :class="{ 'head--no-bar': !bar || score === null }">
+  <span class="head" :class="{ 'head--no-bar': !bar || score === null, 'head--chip-start': chipStart }">
     <span class="head__text">
       <span class="head__title">{{ title }}</span>
       <span v-if="meta" class="head__meta">{{ meta }}</span>
@@ -202,6 +204,24 @@ const marker = computed(() =>
     grid-template-areas:
       'title score'
       'meta chip';
+  }
+
+  .head--chip-start {
+    grid-template-areas:
+      'title score'
+      'chip chip'
+      'bar bar';
+    row-gap: var(--primitives-padding-2);
+  }
+
+  .head--chip-start.head--no-bar {
+    grid-template-areas:
+      'title score'
+      'chip chip';
+  }
+
+  .head--chip-start .head__chip {
+    justify-self: start;
   }
 
   .head__score {

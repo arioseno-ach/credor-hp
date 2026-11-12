@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { prototypeScenarios } from '@/lib/prototype/scenarios'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 import { useAppView } from '@/composables/useAppView'
-import type { PrototypeStage } from '@/lib/prototype/types'
+import type { PrototypeStage, RiskPulseView } from '@/lib/prototype/types'
 
 const {
   state,
@@ -12,6 +12,8 @@ const {
   showTransactions,
   setStage,
   toggleModule,
+  setRiskPulse,
+  setScoreTier,
   togglePrefilledDocuments,
 } = usePrototypeState()
 
@@ -26,6 +28,20 @@ const stages: { id: PrototypeStage; label: string }[] = [
   { id: 'personalising', label: 'Personalisasi jalan' },
   { id: 'complete', label: 'Personalisasi selesai' },
 ]
+
+const riskPulseViews: { id: RiskPulseView; label: string }[] = [
+  { id: 'ready', label: 'Normal' },
+  { id: 'syncing', label: 'Sync' },
+  { id: 'empty', label: 'Kosong' },
+  { id: 'error', label: 'Error' },
+]
+
+const scoreTiers = [
+  { id: 'auto', label: 'Skor asli' },
+  { id: 'low', label: 'Rendah' },
+  { id: 'mid', label: 'Tengah' },
+  { id: 'high', label: 'Tinggi' },
+] as const
 
 const activeStageLabel = computed(
   () => stages.find((stage) => stage.id === state.stage)?.label ?? state.stage,
@@ -114,6 +130,44 @@ const activeStageLabel = computed(
         </label>
       </div>
 
+      <div class="scenario-bar__risk">
+        <span class="scenario-bar__label">Risk Pulse</span>
+        <div class="scenario-bar__stages" role="group" aria-label="Risk Pulse page state">
+          <button
+            v-for="item in riskPulseViews"
+            :key="item.id"
+            type="button"
+            class="scenario-bar__stage"
+            :class="{ 'scenario-bar__stage--active': item.id === (state.modules.riskPulse ?? 'ready') }"
+            :aria-pressed="item.id === (state.modules.riskPulse ?? 'ready')"
+            @click="setRiskPulse(item.id)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+        <div class="scenario-bar__stages" role="group" aria-label="Simulated score">
+          <button
+            v-for="item in scoreTiers"
+            :key="item.id"
+            type="button"
+            class="scenario-bar__stage"
+            :class="{ 'scenario-bar__stage--active': item.id === (state.modules.scoreTier ?? 'auto') }"
+            :aria-pressed="item.id === (state.modules.scoreTier ?? 'auto')"
+            @click="setScoreTier(item.id)"
+          >
+            {{ item.label }}
+          </button>
+        </div>
+        <label class="scenario-bar__toggle">
+          <input
+            type="checkbox"
+            :checked="!!state.modules.summaryDown"
+            @change="toggleModule('summaryDown')"
+          />
+          <span>Summary LLM gagal</span>
+        </label>
+      </div>
+
       <p class="scenario-bar__description">{{ scenario.description }}</p>
     </template>
 
@@ -189,6 +243,12 @@ const activeStageLabel = computed(
   display: flex;
   flex-wrap: wrap;
   gap: var(--primitives-padding-2) var(--primitives-padding-4);
+}
+
+.scenario-bar__risk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--primitives-padding-2);
 }
 
 .scenario-bar__stages {

@@ -5,7 +5,6 @@ import {
   formatIndicatorValue,
   formatScore,
   goodHint,
-  indicatorLabel,
   indicatorStatus,
   type RiskPulseIndicator,
 } from '@/lib/risk-pulse'
@@ -17,8 +16,6 @@ const props = defineProps<{
   label: string
   /** Evidence mode: name and value only, no score column, no paging. */
   compact?: boolean
-  /** Show the engine's indicator names instead of the plain-language ones. */
-  originalNames?: boolean
 }>()
 
 const page = ref(1)
@@ -55,7 +52,7 @@ function valueText(indicator: RiskPulseIndicator) {
       <tbody>
         <tr v-for="indicator in visible" :key="indicator.id">
           <td>
-            <span class="indicators__name">{{ props.originalNames ? indicator.name : indicatorLabel(indicator) }}</span>
+            <span class="indicators__name">{{ indicator.name }}</span>
             <span v-if="goodHint(indicator)" class="indicators__hint">{{ goodHint(indicator) }}</span>
           </td>
           <td
@@ -174,16 +171,35 @@ function valueText(indicator: RiskPulseIndicator) {
 }
 
 /*
- * Evidence mode: the cells sit flush with the sentence above and the row's own padding
- * provides the separation, so the evidence reads as part of its row, not a stray row.
+ * Evidence mode: data points sit a level below their category. Smaller, regular weight, a hairline
+ * between rows, value on the right; the category above keeps the only heavy type.
  */
 .indicators--compact td {
+  padding-top: var(--primitives-padding-2);
+  padding-bottom: var(--primitives-padding-2);
+  font-size: var(--primitives-font-sizes-xs);
+  line-height: var(--primitives-line-heights-2xs);
+}
+
+.indicators--compact tbody tr:first-child td {
   padding-top: 0;
+}
+
+.indicators--compact tbody tr:last-child td {
   padding-bottom: 0;
 }
 
-/* Evidence is the answer under a small label, so the name leads and the hint stays quiet. */
 .indicators--compact .indicators__name {
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-weight: 400;
+}
+
+.indicators--compact .indicators__num {
+  color: var(--semantic-text-ach-color-text-default);
   font-weight: 500;
+}
+
+.indicators--compact .indicators__hint {
+  margin-top: 0;
 }
 </style>

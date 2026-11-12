@@ -121,62 +121,6 @@ export function areaLabelForLayerName(layerName: string, report: RiskPulseReport
   return layer ? (areaNames[layer.id] ?? layer.name) : layerName
 }
 
-/** Customer-facing names for the Risk Pulse categories, keyed by the engine's name. */
-export const categoryNames: Record<string, string> = {
-  'Age and stability': 'Business age and stability',
-  'Digital footprint': 'Online presence',
-  'Identity, registration and legal status': 'Registration and legal status',
-  Scale: 'Business size',
-  'Structural tax profile': 'Tax profile',
-  'Consistency with own history': 'Consistency over time',
-  'Flow level and dynamics': 'Sales and purchase flow',
-  'Historical payment behaviour: the company as payer': 'How you pay suppliers',
-  'Invoice quality and dilution': 'Invoice quality',
-  'Payment terms': 'Payment terms',
-  'Transaction plausibility and revived rules ("does this make sense")': 'Transaction checks',
-  'Contagion and exposure': 'Exposure to risky partners',
-  'Counterparty quality': 'Partner quality',
-  'Customer base (observed customers)': 'Customer base',
-  'Network structure': 'Trading network',
-  'Related parties and group': 'Related companies',
-  'Relationship dynamics': 'Relationship strength',
-  'Supplier base': 'Supplier base',
-  'Industry risk and outlook': 'Industry outlook',
-  'Margin and working-capital economics': 'Margins and working capital',
-  'Value added and working-capital economics': 'Value added and working capital',
-  'Product and market mix': 'Product and market mix',
-  'Seasonality and demand pattern': 'Seasonal demand',
-  'Trade role and chain position': 'Role in the supply chain',
-  'OP financing track record': 'Financing history',
-  'Obligation payment regularity and pattern breaks': 'Payment regularity',
-  'Tax filing and withholding compliance': 'Tax filing',
-  'Tax payment discipline': 'Tax payment discipline',
-}
-
-export function categoryLabel(name: string): string {
-  return categoryNames[name] ?? name
-}
-
-/** Plain names for the analyst labels most likely to surface as evidence. */
-const indicatorNames: Record<string, string> = {
-  'OP application rejections': 'Rejected financing applications',
-  'OP credit-line utilisation': 'Credit line in use',
-  'Two-hop risk mass': "Risk from your customers' customers",
-  'Supplier concentration (HHI)': 'Supplier concentration',
-  'Customer concentration (HHI)': 'Customer concentration',
-  'OP platform tenure': 'Time on the platform',
-  'Top-1 supplier share': 'Largest supplier share',
-  'Top-1 customer share': 'Largest customer share',
-  'Worst lateness, p90 days': 'Late payment days, worst cases',
-  'Supplier-payment proxy (e-Bupot)': 'Supplier payments (e-Bupot)',
-  'Supplier legitimacy exposure': 'Purchases from unverified suppliers',
-  'Customer legitimacy exposure': 'Sales to unverified customers',
-}
-
-export function indicatorLabel(indicator: RiskPulseIndicator): string {
-  return indicatorNames[indicator.name] ?? indicator.name
-}
-
 /**
  * Fraud and plausibility checks are scored like any other category, but their indicators are not
  * listed to the company being checked.
@@ -236,18 +180,25 @@ export function indicatorsFor(categoryName: string, report: RiskPulseReport = ri
     .sort((a, b) => statusOrder[indicatorStatus(a)] - statusOrder[indicatorStatus(b)])
 }
 
-/** Scored indicators that best explain a strength (highest first) or a weakness (lowest first). */
+/**
+ * Scored indicators that back a highlight, best first: score 4 or higher for a strength, 2 or lower
+ * for a weakness. When none is in range the single best one stays, so a highlighted category
+ * always shows its evidence.
+ */
 export function evidenceFor(
   categoryName: string,
   tone: 'strength' | 'weakness',
-  count = 2,
+  count = 3,
   report: RiskPulseReport = riskPulseReport,
 ) {
   const direction = tone === 'strength' ? -1 : 1
-  return indicatorsFor(categoryName, report)
+  const ranked = indicatorsFor(categoryName, report)
     .filter((indicator) => indicator.score !== null && indicator.value !== null)
     .sort((a, b) => direction * ((a.score ?? 0) - (b.score ?? 0)) || b.weight - a.weight)
-    .slice(0, count)
+  const inRange = ranked.filter((indicator) =>
+    tone === 'strength' ? (indicator.score ?? 0) >= 4 : (indicator.score ?? 0) <= 2,
+  )
+  return (inRange.length ? inRange : ranked).slice(0, inRange.length ? count : 1)
 }
 
 export type IndicatorStatus = 'scored' | 'default' | 'missing'
@@ -323,6 +274,21 @@ export function goodHint(indicator: RiskPulseIndicator): string {
   return indicator.whatIsGood
 }
 
+/**
+ * One sentence from a list of data points, filled from their own names, values and hints:
+ * "Items bought is 28 (best in a middle range) and Export share of sales is 0%."
+ * Same input, same sentence; nothing is written by a model.
+ */
+export function describeDataPoints(indicators: RiskPulseIndicator[]): string {
+  const parts = indicators.map((indicator) => {
+    const hint = goodHint(indicator)
+    return `${indicator.name} is ${formatIndicatorValue(indicator)}${hint ? ` (${hint.charAt(0).toLowerCase()}${hint.slice(1)})` : ''}`
+  })
+  if (parts.length === 0) return ''
+  const last = parts.pop() as string
+  return `${parts.length ? `${parts.join(', ')} and ` : ''}${last}.`
+}
+
 /** Verdict copy for this company, written from the numbers above. */
 export const verdict = {
   headline: 'Solid foundations, held back by small scale and one dominant supplier.',
@@ -331,56 +297,41 @@ export const verdict = {
     'Growing your recorded sales and buying more from your other suppliers could help lift the score.',
 }
 
+export type SummaryTier = 'low' | 'mid' | 'high'
+
+/** Poor and Fair read as low, Good as mid, Very Good and Excellent as high. */
+export function summaryTier(score: number): SummaryTier {
+  const band = scoreBandIndex(score)
+  return band <= 1 ? 'low' : band === 2 ? 'mid' : 'high'
+}
+
+function joinNames(names: string[]): string {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
 /**
- * Rule-based reading of a highlighted category: how many of its scored indicators are strong
- * (4 or 5) or weak (1 or 2). Computed from the data, so it holds for any company or month.
- * Empty when the rule makes no claim: no scored indicators, or none of them in the range.
+ * Shown in place of the written summary when it cannot be generated. Three fixed wordings by score
+ * tier, with the three weakest (or strongest) category names filled in. No model.
  */
-export function categorySignal(
-  categoryName: string,
-  tone: 'strength' | 'weakness',
-  report: RiskPulseReport = riskPulseReport,
-): string {
-  const scored = indicatorsFor(categoryName, report).filter((indicator) => indicator.score !== null)
-  const matching = scored.filter((indicator) =>
-    tone === 'strength' ? (indicator.score ?? 0) >= 4 : (indicator.score ?? 0) <= 2,
-  ).length
-  const range = tone === 'strength' ? '4 or higher' : '2 or lower'
-  if (scored.length === 0 || matching === 0) return ''
-  if (scored.length === 1) return `Its only scored indicator scores ${range}.`
-  if (scored.length === 2 && matching === scored.length) return `Both scored indicators score ${range}.`
-  if (matching === scored.length) return `All ${matching} scored indicators score ${range}.`
-  return `${matching} of ${scored.length} scored indicators ${matching === 1 ? 'scores' : 'score'} ${range}.`
+export function verdictFallback(report: RiskPulseReport = riskPulseReport, tier: SummaryTier = summaryTier(report.overall)) {
+  const names = (categories: { name: string }[]) => joinNames(categories.map((category) => category.name))
+  if (tier === 'low') {
+    return {
+      headline: 'Your score has room to grow.',
+      body: `Start with ${names(bottomCategories(3, report))}, your lowest scoring categories.`,
+    }
+  }
+  if (tier === 'mid') {
+    return {
+      headline: 'Your score is in good shape.',
+      body: `To lift it further, work on ${names(bottomCategories(3, report))}, your lowest scoring categories.`,
+    }
+  }
+  return {
+    headline: 'Your score is strong.',
+    body: `To keep it there, keep ${names(topCategories(3, report))} steady, your highest scoring categories.`,
+  }
 }
-
-export interface ImprovementStep {
-  title: string
-  why: string
-  area: string
-}
-
-export const improvementSteps: ImprovementStep[] = [
-  {
-    title: 'Spread purchases across your suppliers',
-    why: 'Your largest supplier takes 73% of what you buy, out of 9 active suppliers. Buying more from the others lowers that dependence.',
-    area: areaNames['trade-network'],
-  },
-  {
-    title: 'Keep your invoice records complete',
-    why: 'Business size is measured from the invoices we can see, so complete records give a fuller picture of your business.',
-    area: areaNames.borrower,
-  },
-  {
-    title: 'Connect all your tax records',
-    why: 'We see one tax type paid or filed. If you file other tax types, connecting them gives a fuller tax profile.',
-    area: areaNames.borrower,
-  },
-  {
-    title: 'Keep monthly sales steadier',
-    why: 'Sales vary a lot from month to month. Recurring contracts or monthly billing make cash flow easier to read.',
-    area: areaNames.transaction,
-  },
-]
 
 /** Date of the staging preview this data comes from. */
 export const riskPulseUpdatedAt = '30 Oct 2026'

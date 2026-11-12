@@ -2,9 +2,12 @@
 import { computed } from 'vue'
 import { formatScore, scoreRatio } from '@/lib/risk-pulse'
 import RiskBandChip from './RiskBandChip.vue'
-import { bandStrong } from './shared'
+import { bandMuted, bandStrong } from './shared'
 
-const props = defineProps<{ score: number }>()
+const props = defineProps<{
+  /** Null while there is no score: muted arc, no marker, a dash for the value. */
+  score: number | null
+}>()
 
 // Semicircle in a 240 x 132 box: centre (120, 120), radius 100. Angle runs from PI (score 1) to 0 (score 5).
 const CX = 120
@@ -18,14 +21,16 @@ function pointAt(angle: number) {
 }
 
 // Bands are exact fifths of the 1-5 range, so each segment is one fifth of the arc.
-const segments = bandStrong.map((color, index) => {
+const segments = bandStrong.map((strong, index) => {
   const start = pointAt(Math.PI - index * step - (index === 0 ? 0 : GAP / 2))
   const end = pointAt(Math.PI - (index + 1) * step + (index === bandStrong.length - 1 ? 0 : GAP / 2))
   const d = `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${RADIUS} ${RADIUS} 0 0 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
-  return { d, color }
+  return { d, strong, muted: bandMuted[index] }
 })
 
-const marker = computed(() => pointAt(Math.PI * (1 - scoreRatio(props.score))))
+const marker = computed(() =>
+  props.score === null ? null : pointAt(Math.PI * (1 - scoreRatio(props.score))),
+)
 </script>
 
 <template>
@@ -37,19 +42,20 @@ const marker = computed(() => pointAt(Math.PI * (1 - scoreRatio(props.score))))
           :key="index"
           class="gauge__segment"
           :d="segment.d"
-          :style="{ stroke: segment.color }"
+          :style="{ stroke: score === null ? segment.muted : segment.strong }"
         />
-        <circle class="gauge__marker" :cx="marker.x" :cy="marker.y" r="9" />
+        <circle v-if="marker" class="gauge__marker" :cx="marker.x" :cy="marker.y" r="9" />
       </svg>
       <p class="gauge__score">
         <span class="sr-only">Company health score </span>
-        <span class="gauge__value">{{ formatScore(score) }}</span>
-        <span class="gauge__max">/ 5</span>
+        <span class="gauge__value">{{ score === null ? '–' : formatScore(score) }}</span>
+        <span v-if="score !== null" class="gauge__max">/ 5</span>
       </p>
     </div>
     <div class="gauge__foot">
       <span class="gauge__end" aria-hidden="true">1</span>
-      <RiskBandChip :score="score" />
+      <RiskBandChip v-if="score !== null" :score="score" />
+      <span v-else></span>
       <span class="gauge__end" aria-hidden="true">5</span>
     </div>
   </div>

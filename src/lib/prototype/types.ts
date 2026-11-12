@@ -1,6 +1,8 @@
 export type PrototypeStage = 'default' | 'personalising' | 'complete'
 
 export type HealthVariant = 'unsync' | 'syncing' | 'synced'
+/** What the Risk Pulse detail page shows: the report, or why there is no report. */
+export type RiskPulseView = 'ready' | 'syncing' | 'empty' | 'error'
 export type BannerVariant = 'carousel' | 'compact' | 'none'
 
 export interface DetailField {
@@ -54,6 +56,12 @@ export interface PrototypeState {
     purchasesEmpty?: boolean
     /** Demo shortcut: the sales tab has no invoices, whatever the data holds. */
     salesEmpty?: boolean
+    /** Demo shortcut: the Risk Pulse detail page state. Missing means ready. */
+    riskPulse?: RiskPulseView
+    /** Demo shortcut: the written summary could not be generated, the scores still show. */
+    summaryDown?: boolean
+    /** Demo shortcut: pretend the company scores low, mid or high. Auto uses the real score. */
+    scoreTier?: 'auto' | 'low' | 'mid' | 'high'
   }
   data: {
     balance: number

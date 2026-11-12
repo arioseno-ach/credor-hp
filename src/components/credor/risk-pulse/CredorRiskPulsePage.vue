@@ -5,25 +5,27 @@ import { Button } from '@/components/ui/button'
 import { verifiedCompany } from '@/components/credor/personalisation'
 import { useAppView } from '@/composables/useAppView'
 import { useSnackbar } from '@/composables/useSnackbar'
+import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 import { companyHealthCategories } from '@/lib/company-health'
 import {
-  areaLabelForLayerName,
   bottomCategories,
-  categoryLabel,
-  categorySignal,
   coverage,
   evidenceFor,
   formatDelta,
   getAreas,
+  describeDataPoints,
+  indicatorsFor,
   originalAreaLabel,
   sortMacroToMicro,
-  improvementSteps,
   riskPulseMonths,
+  riskPulseUpdatedAt,
   scoreBand,
   scoreBandIndex,
   scoreDelta,
   topCategories,
   verdict,
+  summaryTier,
+  verdictFallback,
 } from '@/lib/risk-pulse'
 import RiskAreaTable from './RiskAreaTable.vue'
 import RiskFactorRow from './RiskFactorRow.vue'
@@ -33,6 +35,28 @@ import RiskScoreHead from './RiskScoreHead.vue'
 
 const { goHome, openApply } = useAppView()
 const { show } = useSnackbar()
+const { state: prototype, setRiskPulse } = usePrototypeState()
+
+const view = computed(() => prototype.modules.riskPulse ?? 'ready')
+const isReady = computed(() => view.value === 'ready')
+const summary = computed(() => (prototype.modules.summaryDown ? verdictFallback(report.value, summaryTier(overall.value)) : verdict))
+
+/** Why there is no report. Each state says what is happening and what to do next. */
+const statusCopy = {
+  syncing: {
+    headline: 'We are syncing your tax data.',
+    body: 'Your Company Health appears here once the sync finishes. You can still apply for financing while you wait.',
+  },
+  empty: {
+    headline: 'Your Company Health is not ready yet.',
+    body: 'Connect your tax data and we will calculate your first score.',
+  },
+  error: {
+    headline: 'We could not load your Company Health.',
+    body: 'Something went wrong on our side. Your data is safe. Try again in a moment.',
+  },
+} as const
+const verdictCopy = computed(() => (view.value === 'ready' ? summary.value : statusCopy[view.value]))
 
 /** The support channel is outside this prototype, so the action only says where it leads. */
 function contactUs() {
@@ -55,7 +79,13 @@ const month = computed(() => riskPulseMonths[monthIndex.value])
 const previousMonth = computed(() => riskPulseMonths[monthIndex.value + 1])
 const report = computed(() => month.value.report)
 
-const overall = computed(() => report.value.overall)
+// Prototype control: a fixed score per tier (Fair, Good, Excellent) to preview gauge, score, label and copy.
+const simulatedScores = { low: 2.2, mid: 3, high: 4.5 } as const
+const simulated = computed(() => {
+  const tier = prototype.modules.scoreTier
+  return tier && tier !== 'auto' ? simulatedScores[tier] : null
+})
+const overall = computed(() => simulated.value ?? report.value.overall)
 const counts = computed(() => coverage(report.value))
 const areas = computed(() => sortMacroToMicro(getAreas(report.value)))
 
@@ -65,7 +95,7 @@ const startingRate = computed(() => companyHealthCategories[scoreBandIndex(overa
 
 /** Change against the month before; null for the oldest month. */
 const overallDelta = computed(() =>
-  previousMonth.value ? scoreDelta(overall.value, previousMonth.value.report.overall) : null,
+  previousMonth.value && simulated.value === null ? scoreDelta(overall.value, previousMonth.value.report.overall) : null,
 )
 
 function areaDelta(areaId: string) {
@@ -92,19 +122,28 @@ const stories = computed(
       {
         id: 'rp-working',
         title: "What's working",
-        evidenceLabel: 'Strongest signal',
         tone: 'strength',
         categories: topCategories(3, report.value),
       },
       {
         id: 'rp-attention',
         title: 'Needs attention',
-        evidenceLabel: 'Weakest signal',
         tone: 'weakness',
         categories: bottomCategories(3, report.value),
       },
     ] as const,
 )
+
+/** Data points shown under a highlighted category: up to three that match its sentence. */
+function evidence(categoryName: string, tone: 'strength' | 'weakness') {
+  return evidenceFor(categoryName, tone, 3, report.value)
+}
+
+/** How many of the category's data points are listed, out of all it has. */
+function dataPointCount(categoryName: string, tone: 'strength' | 'weakness') {
+  const total = indicatorsFor(categoryName, report.value).length
+  return `${evidence(categoryName, tone).length} of ${total} data point${total === 1 ? '' : 's'}`
+}
 
 /** Heading track + one track per category, shared by both cells so matching rows stay level. */
 const pairRows = computed(() => 1 + Math.max(...stories.value.map((story) => story.categories.length)))
@@ -113,6 +152,7 @@ const pairRows = computed(() => 1 + Math.max(...stories.value.map((story) => sto
 const activeId = ref(chapters[0].id)
 const navList = ref<HTMLElement | null>(null)
 const titleHeading = ref<HTMLElement | null>(null)
+const indicator = ref({ x: 0, width: 0, ready: false })
 
 function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -182,6 +222,12 @@ onMounted(() => {
     if (section) observer.observe(section)
   }
 
+  // Place the tab underline once layout and fonts settle, then let it slide on later changes.
+  moveIndicator()
+  document.fonts?.ready.then(moveIndicator)
+  window.addEventListener('resize', moveIndicator)
+  requestAnimationFrame(() => (indicator.value.ready = true))
+
   edgeObserver = new IntersectionObserver((entries) => {
     for (const entry of entries) {
       if (entry.target === titleHeading.value) atStart = entry.isIntersecting
@@ -195,14 +241,22 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', moveIndicator)
   observer?.disconnect()
   edgeObserver?.disconnect()
   window.clearTimeout(lockTimer)
 })
 
 // On narrow screens the nav scrolls sideways; keep the active chapter in view.
+/** One underline under the active tab; the tab's offset inside the list is also where it scrolls with. */
+function moveIndicator() {
+  const link = navList.value?.querySelector<HTMLElement>('[aria-current="location"]')
+  if (link) indicator.value = { ...indicator.value, x: link.offsetLeft, width: link.offsetWidth }
+}
+
 watch(activeId, async () => {
   await nextTick()
+  moveIndicator()
   const list = navList.value
   const link = list?.querySelector<HTMLElement>('[aria-current="location"]')
   if (!list || !link || list.scrollWidth <= list.clientWidth) return
@@ -227,9 +281,13 @@ watch(activeId, async () => {
       <div class="rp__title-row">
         <div class="rp__title-block">
           <h1 id="risk-pulse-title" ref="titleHeading" class="rp__title" tabindex="-1">Your Company Health</h1>
-          <p class="rp__subtitle">{{ verifiedCompany.name }}</p>
+          <p class="rp__subtitle">
+            {{ verifiedCompany.name }}
+            <!-- Only the latest month has a sync date; earlier months are prototype history. -->
+            <template v-if="isReady && monthIndex === 0"> · Last update: {{ riskPulseUpdatedAt }}</template>
+          </p>
         </div>
-        <div class="rp__actions">
+        <div v-if="isReady" class="rp__actions">
           <span class="rp__month">
             <select v-model="monthKey" class="rp__month-select" aria-label="Report month">
               <option v-for="item in riskPulseMonths" :key="item.key" :value="item.key">
@@ -261,7 +319,7 @@ watch(activeId, async () => {
       </div>
     </header>
 
-    <nav class="rp__nav" aria-label="Page sections">
+    <nav v-if="isReady" class="rp__nav" aria-label="Page sections">
       <ul ref="navList" class="rp__nav-list">
         <li v-for="chapter in chapters" :key="chapter.id">
           <a
@@ -273,17 +331,34 @@ watch(activeId, async () => {
             {{ chapter.label }}
           </a>
         </li>
+        <li
+          class="rp__nav-indicator"
+          :class="{ 'rp__nav-indicator--ready': indicator.ready }"
+          :style="{ width: `${indicator.width}px`, transform: `translateX(${indicator.x}px)` }"
+          aria-hidden="true"
+        ></li>
       </ul>
     </nav>
 
-    <section :id="chapters[0].id" class="rp__chapter rp__verdict" aria-labelledby="rp-verdict-title">
+    <section
+      :id="chapters[0].id"
+      class="rp__chapter rp__verdict"
+      :aria-busy="view === 'syncing'"
+      aria-labelledby="rp-verdict-title"
+    >
       <div class="rp__gauge">
-        <RiskGauge :score="overall" />
+        <RiskGauge :score="isReady ? overall : null" />
       </div>
       <div class="rp__verdict-copy">
-        <h2 id="rp-verdict-title" class="rp__headline" tabindex="-1">{{ verdict.headline }}</h2>
-        <p class="rp__text">{{ verdict.body }}</p>
-        <p class="rp__note">
+        <h2 id="rp-verdict-title" class="rp__headline" tabindex="-1">{{ verdictCopy.headline }}</h2>
+        <p class="rp__text">{{ verdictCopy.body }}</p>
+        <div v-if="view === 'empty'">
+          <Button type="button" @click="openApply({ kind: 'product', productId: 'ar' })">Connect tax data</Button>
+        </div>
+        <div v-else-if="view === 'error'">
+          <Button type="button" variant="outline" color="neutral" @click="setRiskPulse('ready')">Try again</Button>
+        </div>
+        <p v-if="isReady" class="rp__note">
           <span v-if="overallDelta !== null" class="rp__delta" :class="`rp__delta--${deltaTone(overallDelta)}`">
             {{ overallDelta === 0 ? 'No change' : formatDelta(overallDelta) }} vs {{ previousMonth?.label }}
           </span>
@@ -293,6 +368,31 @@ watch(activeId, async () => {
       </div>
     </section>
 
+    <!-- No report yet: the page's own cards, with their real titles, waiting for data. Only syncing pulses. -->
+    <template v-if="view === 'syncing' || view === 'empty'">
+      <div class="rp__pair rp__pair--wait" :class="{ 'rp__wait-live': view === 'syncing' }" aria-hidden="true">
+        <section v-for="story in stories" :key="story.id" class="rp__card rp__wait-card">
+          <h2 class="rp__h2">{{ story.title }}</h2>
+          <div v-for="row in 3" :key="row" class="rp__wait-row">
+            <span class="rp__ph rp__ph--title"></span>
+            <span class="rp__ph"></span>
+          </div>
+        </section>
+      </div>
+      <section
+        class="rp__card rp__wait-card rp__chapter"
+        :class="{ 'rp__wait-live': view === 'syncing' }"
+        aria-hidden="true"
+      >
+        <h2 class="rp__h2">{{ chapters[2].label }}</h2>
+        <div v-for="area in areas" :key="area.id" class="rp__wait-row rp__wait-row--area">
+          <span class="rp__ph rp__ph--title"></span>
+          <span class="rp__ph rp__ph--score"></span>
+        </div>
+      </section>
+    </template>
+
+    <template v-if="isReady">
     <div
       :id="chapters[1].id"
       class="rp__pair"
@@ -308,21 +408,14 @@ watch(activeId, async () => {
       <h2 :id="`${story.id}-title`" class="rp__h2" tabindex="-1">{{ story.title }}</h2>
       <ul class="rp__rows">
         <li v-for="category in story.categories" :key="category.id">
-          <RiskFactorRow
-            :title="categoryLabel(category.name)"
-            :meta="areaLabelForLayerName(category.layerName)"
-            :score="category.score"
-          >
-            <p v-if="categorySignal(category.name, story.tone, report)" class="rp__text">
-              {{ categorySignal(category.name, story.tone, report) }}
-            </p>
-            <!-- One signal per category keeps the paired columns level. -->
-            <div v-if="evidenceFor(category.name, story.tone, 1, report).length" class="rp__evidence">
-              <p class="rp__evidence-label">{{ story.evidenceLabel }}</p>
+          <RiskFactorRow :title="category.name" :score="category.score">
+            <p class="rp__text">{{ dataPointCount(category.name, story.tone) }}</p>
+            <!-- Up to three data points that back the claim; the paired rows stay level on the subgrid. -->
+            <div v-if="evidence(category.name, story.tone).length" class="rp__evidence">
               <RiskIndicatorList
                 compact
-                :indicators="evidenceFor(category.name, story.tone, 1, report)"
-                :label="`${story.evidenceLabel} in ${categoryLabel(category.name)}`"
+                :indicators="evidence(category.name, story.tone)"
+                :label="`Data points in ${category.name}`"
               />
             </div>
           </RiskFactorRow>
@@ -356,11 +449,12 @@ watch(activeId, async () => {
       <div class="rp__improve">
         <h2 id="rp-improve-title" class="rp__h2" tabindex="-1">{{ chapters[3].label }}</h2>
         <ol class="rp__steps">
-          <li v-for="step in improvementSteps" :key="step.title" class="rp__step">
+          <!-- The same three categories as Needs attention, each with its weakest data points. -->
+          <li v-for="category in stories[1].categories" :key="category.id" class="rp__step">
             <div class="rp__step-copy">
-              <p class="rp__step-title">{{ step.title }}</p>
-              <p class="rp__text">{{ step.why }}</p>
-              <span class="rp__tag">{{ step.area }}</span>
+              <p class="rp__step-title">{{ category.name }}</p>
+              <p class="rp__text">{{ describeDataPoints(evidence(category.name, 'weakness')) }}</p>
+              <p class="rp__note">{{ dataPointCount(category.name, 'weakness') }}</p>
             </div>
           </li>
         </ol>
@@ -389,6 +483,7 @@ watch(activeId, async () => {
         OJK-licensed partners and is subject to their review.
       </p>
     </section>
+    </template>
     <span ref="endMarker" aria-hidden="true"></span>
   </div>
 </template>
@@ -401,6 +496,8 @@ watch(activeId, async () => {
   max-width: 800px;
   flex-direction: column;
   margin-inline: auto;
+  /* Clearance for the pinned top bar and tabs, so an anchor jump never lands under it. */
+  --rp-bar-offset: calc(var(--component-topbar-height) + var(--primitives-padding-12));
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
 }
@@ -563,11 +660,86 @@ watch(activeId, async () => {
   outline: none;
 }
 
+/* Not ready: placeholders keep the shape of the report */
+.rp__pair.rp__pair--wait {
+  grid-template-rows: none;
+  margin-top: var(--primitives-padding-6);
+}
+
+.rp__card.rp__wait-card {
+  position: relative;
+  /* This card has no data yet: the real border goes invisible (it keeps the size) and a dashed one is drawn over it. */
+  border-color: transparent;
+}
+
+/* CSS dashes scale with border width, so the dashes are an SVG mask (8px dash, 6px gap) filled with the border colour. */
+.rp__card.rp__wait-card::before {
+  position: absolute;
+  inset: calc(-1 * var(--primitives-border-width-default));
+  border-radius: var(--primitives-border-radius-lg);
+  background: var(--component-card-border);
+  content: '';
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' rx='16' fill='none' stroke='black' stroke-width='2' stroke-dasharray='8 6'/%3E%3C/svg%3E");
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='100%25' height='100%25' rx='16' fill='none' stroke='black' stroke-width='2' stroke-dasharray='8 6'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+.rp__wait-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--primitives-padding-4);
+}
+
+.rp__wait-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--primitives-padding-2);
+}
+
+.rp__wait-row--area {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rp__ph {
+  display: block;
+  width: 100%;
+  height: var(--primitives-padding-3);
+  border-radius: var(--primitives-border-radius-sm);
+  background: var(--semantic-bg-ach-color-bg-surface-secondary);
+}
+
+.rp__ph--title {
+  width: 55%;
+  height: var(--primitives-padding-4);
+}
+
+.rp__ph--score {
+  width: 96px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rp__wait-live .rp__ph {
+    animation: rp-wait var(--semantic-motion-duration-spin) ease-in-out infinite alternate;
+  }
+}
+
+@keyframes rp-wait {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.45;
+  }
+}
+
 /* Sticky chapter nav */
+/* Pins under the sticky top bar, so the two read as one header. */
 .rp__nav {
   position: sticky;
-  z-index: 1;
-  top: 0;
+  z-index: 2;
+  top: var(--component-topbar-height);
   border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
   background: var(--semantic-bg-ach-color-bg-surface);
 }
@@ -585,8 +757,9 @@ watch(activeId, async () => {
 
 .rp__nav-link {
   display: block;
-  padding: var(--primitives-padding-3) var(--primitives-padding-1) var(--primitives-padding-2);
-  border-bottom: var(--primitives-border-width-2) solid transparent;
+  /* The bottom padding includes the 2px the underline used to take as a border, so tab height is unchanged. */
+  padding: var(--primitives-padding-3) var(--primitives-padding-1)
+    calc(var(--primitives-padding-2) + var(--primitives-border-width-2));
   color: var(--semantic-text-ach-color-text-secondary);
   font-size: var(--primitives-font-sizes-sm);
   font-weight: 500;
@@ -600,8 +773,22 @@ watch(activeId, async () => {
   color: var(--semantic-text-ach-color-text-default);
 }
 
-.rp__nav-link[aria-current='location'] {
-  border-bottom-color: var(--semantic-text-ach-color-text-default);
+/* The one underline that slides to the active tab. */
+.rp__nav-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: var(--primitives-border-width-2);
+  background: var(--semantic-text-ach-color-text-default);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rp__nav-indicator--ready {
+    transition:
+      transform var(--semantic-motion-duration-base) var(--semantic-motion-easing-emphasized),
+      width var(--semantic-motion-duration-base) var(--semantic-motion-easing-emphasized);
+  }
 }
 
 /* Chapters: spacing and flow; chapters that render as cards add .rp__card. */
@@ -611,7 +798,7 @@ watch(activeId, async () => {
   gap: var(--primitives-padding-6);
   padding: var(--primitives-padding-10) 0;
   /* Keeps the heading clear of the sticky nav after an anchor jump. */
-  scroll-margin-top: var(--primitives-padding-12);
+  scroll-margin-top: var(--rp-bar-offset);
 }
 
 /* The card chapters share one recipe, the same one the Credor cards use. */
@@ -635,7 +822,7 @@ watch(activeId, async () => {
 .rp__pair {
   display: grid;
   /* Same clearance as a chapter when the nav jumps to a pair. */
-  scroll-margin-top: var(--primitives-padding-12);
+  scroll-margin-top: var(--rp-bar-offset);
   grid-template-columns: repeat(2, minmax(0, 1fr));
   /* 1 heading track + 1 per category, set inline from the stories (--rp-rows vs --rp-rows-content). */
   grid-template-rows: repeat(var(--rp-rows, 4), minmax(0, auto));
@@ -734,15 +921,6 @@ watch(activeId, async () => {
   gap: var(--primitives-padding-2);
 }
 
-/* Same tokens as the page notes; the small visible label above the evidence table. */
-.rp__evidence-label {
-  margin: 0;
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-xs);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-2xs);
-}
-
 /* A container, so the area rows stack on a phone like the highlight rows do. */
 .rp__breakdown {
   container-type: inline-size;
@@ -833,17 +1011,6 @@ watch(activeId, async () => {
   font-size: var(--primitives-font-sizes-sm);
   font-weight: 500;
   line-height: var(--primitives-line-heights-sm);
-}
-
-.rp__tag {
-  margin-top: var(--primitives-padding-1);
-  padding: 2px var(--primitives-padding-2);
-  border-radius: var(--primitives-border-radius-sm);
-  background: var(--semantic-bg-ach-color-bg-surface-secondary);
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-xs);
-  font-weight: 500;
-  line-height: var(--primitives-line-heights-3xs);
 }
 
 /* Closing */
