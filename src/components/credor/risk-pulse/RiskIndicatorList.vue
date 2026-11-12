@@ -201,5 +201,7 @@ function valueText(indicator: RiskPulseIndicator) {
 
 .indicators--compact .indicators__hint {
   margin-top: 0;
+  font-size: var(--primitives-font-sizes-2xs);
+  line-height: var(--primitives-line-heights-3xs);
 }
 </style>
