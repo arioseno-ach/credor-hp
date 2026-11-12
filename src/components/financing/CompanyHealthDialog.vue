@@ -22,7 +22,7 @@ const dialogStyle: StyleValue = {
 
 const benefits = [
   'See your business health score instantly, at no cost.',
-  'A strong profile unlocks interest rates starting from 1%.',
+  'A strong profile improves your chance of financing rates starting from 1%.',
   'Find areas to improve before you apply.',
 ]
 
@@ -45,13 +45,12 @@ function startHealthCheck() {
             >
 
             <DialogTitle class="company-health-dialog__title">
-              Healthy companies qualify for lower interest rates
+              A healthy company has a better chance of lower interest rates
             </DialogTitle>
 
             <DialogDescription class="company-health-dialog__description">
-              Check your business Company Health before applying for financing. A strong and
-              verified business profile helps us assess you more accurately, unlocking more
-              competitive interest rates.
+              A strong, verified business profile helps us assess you more accurately, which opens
+              the chance of more competitive interest rates.
             </DialogDescription>
 
             <ul class="company-health-dialog__benefits">
@@ -69,7 +68,7 @@ function startHealthCheck() {
               class="company-health-dialog__cta"
               @click="startHealthCheck"
             >
-              Get Your Free Company Health Check
+              Check Company Health for Free
               <template #trailingIcon>
                 <span class="company-health-dialog__cta-arrow" aria-hidden="true"></span>
               </template>
