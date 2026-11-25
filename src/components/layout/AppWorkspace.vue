@@ -18,6 +18,7 @@ import CredorFinancingApply from '@/components/credor/CredorFinancingApply.vue'
 import CredorApplicationDetail from '@/components/credor/CredorApplicationDetail.vue'
 import CredorTransactionsPage from '@/components/credor/CredorTransactionsPage.vue'
 import CredorRiskPulsePage from '@/components/credor/risk-pulse/CredorRiskPulsePage.vue'
+import RiskPartnersPage from '@/components/credor/risk-pulse/RiskPartnersPage.vue'
 import { useAppView } from '@/composables/useAppView'
 import ScenarioSwitcher from '@/components/prototype/ScenarioSwitcher.vue'
 import CredorFinancingSidebar from '@/components/credor/CredorFinancingSidebar.vue'
@@ -56,6 +57,12 @@ function closeMobileNav() {
       </main>
       <main v-else-if="view.name === 'risk-pulse'" class="app-content">
         <CredorRiskPulsePage :key="state.modules.riskPulse ?? 'ready'" />
+      </main>
+      <main v-else-if="view.name === 'partners'" class="app-content">
+        <RiskPartnersPage />
+      </main>
+      <main v-else-if="view.name === 'partner-report'" class="app-content">
+        <CredorRiskPulsePage :key="view.partnerId" :partner-id="view.partnerId" />
       </main>
       <main v-else class="app-content">
         <CredorOverviewHeader />
