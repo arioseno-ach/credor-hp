@@ -43,8 +43,9 @@ export function nextStatus(current: PartnerAccessStatus, event: PartnerAccessEve
   return transitions[current][event] ?? current
 }
 
-export function canConsent(partner: Pick<PartnerScore, 'onAchilles' | 'authKeyReady'>): boolean {
-  return partner.onAchilles && partner.authKeyReady
+/** Consent is verified with the NPWP and the DJP Online passphrase and auth key, so no Achilles account is needed. */
+export function canConsent(partner: Pick<PartnerScore, 'authKeyReady'>): boolean {
+  return partner.authKeyReady
 }
 
 const dateFormat = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -82,7 +83,7 @@ const setup: Record<string, Pick<PartnerScore, 'npwp' | 'onAchilles' | 'authKeyR
   'sumber-logistik': { npwp: '0213456789012000', onAchilles: true, authKeyReady: true, score: 3.9, updatedOn: '01 Nov 2026', status: 'unlocked', requestedOn: '28 Oct 2026', accessUntil: '28 Jan 2027', email: 'finance@sumberlogistik.co.id', consentCode: '39BB659995DCF373' },
   'cipta-digital': { npwp: '0318273645091000', onAchilles: true, authKeyReady: true, score: 2.4, updatedOn: '01 Nov 2026', status: 'locked', email: 'finance@ciptadigital.co.id' },
   'nusantara-teknologi': { npwp: '0745362718290000', onAchilles: true, authKeyReady: false, score: 4.4, updatedOn: '01 Oct 2026', status: 'locked', email: 'keuangan@nusantaratek.co.id' },
-  'karya-utama': { npwp: '0928374651023000', onAchilles: false, authKeyReady: false, score: 3.1, updatedOn: '01 Nov 2026', status: 'locked', email: 'finance@karyautama.co.id' },
+  'karya-utama': { npwp: '0928374651023000', onAchilles: false, authKeyReady: true, score: 3.1, updatedOn: '01 Nov 2026', status: 'locked', email: 'finance@karyautama.co.id' },
   'baja-perkasa': { npwp: '0164738291045000', onAchilles: true, authKeyReady: true, score: 1.6, updatedOn: '01 Nov 2026', status: 'declined', requestedOn: '10 Nov 2026', email: 'keuangan@bajaperkasa.co.id', consentCode: '82E0DFA84B148ADA' },
   'sinar-pangan': { npwp: '0582910374615000', onAchilles: true, authKeyReady: true, score: 3.5, updatedOn: '01 Nov 2026', status: 'pending', requestedOn: '20 Nov 2026', consentCode: '5C02E9A71B44F8D3', email: 'admin@sinarpangan.co.id' },
   'arunika-tekstil': { npwp: '0127483956012000', onAchilles: true, authKeyReady: true, score: 1.4, updatedOn: '01 Nov 2026', status: 'unlocked', requestedOn: '02 Nov 2026', accessUntil: '31 Jan 2027', email: 'finance@arunikatekstil.co.id', consentCode: 'A41C7E02D9B35F68' },

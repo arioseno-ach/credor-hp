@@ -95,6 +95,21 @@ export function usePartnerAccess() {
     return listed ? { kind: 'registered', partner: listed } : { kind: 'unregistered' }
   }
 
+  /**
+   * Any buyer has a score from their tax data, Achilles account or not, so a buyer we do not know yet
+   * joins the portfolio locked and the usual request dialog takes over. Prototype: the score is a demo value.
+   */
+  function addBuyer(buyer: { name: string; npwp: string; email: string }) {
+    const npwp = npwpDigits(buyer.npwp)
+    const existing = partners.value.find((item) => item.npwp === npwp || item.npwp === `0${npwp}`)
+    if (existing) return existing
+    const id = `buyer-${npwp}`
+    const initials = buyer.name.replace(/^(PT|CV|UD)\s+/i, '').split(/\s+/).slice(0, 2).map((word) => word[0]).join('').toUpperCase()
+    const score = 1.5 + (Number(npwp.slice(-4)) % 30) / 10
+    partners.value.push({ id, name: buyer.name, initials, npwp, email: buyer.email, lastTransaction: '', onAchilles: false, authKeyReady: true, score, updatedOn: '01 Nov 2026', status: 'locked' })
+    return partners.value[partners.value.length - 1]
+  }
+
   /** Adds a registered company found by NPWP to the portfolio, locked, so the usual request dialog can send the request. */
   function addFromDirectory(id: string) {
     const listed = achillesDirectory.find((item) => item.id === id)
@@ -103,5 +118,5 @@ export function usePartnerAccess() {
     }
   }
 
-  return { partners, received, request, resend, answerFromLink, completeSetup, answerReceived, revokeReceived, lookup, addFromDirectory }
+  return { partners, received, request, resend, answerFromLink, completeSetup, answerReceived, revokeReceived, lookup, addFromDirectory, addBuyer }
 }

@@ -49,7 +49,7 @@ export const saleBuyers: SaleBuyer[] = initialPartnerScores().map((partner, inde
   email: partner.email,
   verified: partner.onAchilles,
 })).concat([
-  // A buyer outside Achilles, so the demo also shows the invite state.
+  // A buyer we have no RiskPulse record for yet: requesting their score adds one (any company has a score).
   {
     id: 'mitra-bangunan',
     name: 'CV Mitra Bangunan Jaya',

@@ -63,7 +63,7 @@ watch(open, (value) => {
         <DialogDescription class="request__text">
           We will email {{ partner.name }} at {{ partner.email }} and ask them to share their Company Health report with you.
           <template v-if="!canConsent(partner)">
-            They need to finish setting up their Achilles account before they can reply.
+            They need a DJP Online auth key before they can reply.
           </template>
         </DialogDescription>
   

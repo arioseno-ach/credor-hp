@@ -63,7 +63,7 @@ function pulseOf(buyer: SaleBuyer) {
 // Words for the RiskPulse tag in the buyer list; the "RiskPulse" caption above them says what they are about.
 function pulseStatus(buyer: SaleBuyer) {
   const pulse = pulseOf(buyer)
-  if (!pulse || !pulse.onAchilles) return 'Not on Achilles'
+  if (!pulse) return 'Not shared yet'
   if (pulse.status === 'pending') return 'Requested'
   if (pulse.status === 'declined') return 'Declined'
   if (pulse.status === 'unlocked') return 'Shared with you'
@@ -265,11 +265,10 @@ function notInPrototype(feature: string) {
                     <TooltipTrigger as-child>
                       <span class="sc__pulse-tag">
                         <span v-if="pulseOf(buyer)?.status === 'unlocked'" class="sc__pulse-value">
-                          <strong>{{ pulseOf(buyer)!.score.toFixed(1) }}</strong>
                           <RiskBandChip :score="pulseOf(buyer)!.score" />
+                          <strong>{{ pulseOf(buyer)!.score.toFixed(1) }}</strong>
                         </span>
-                        <RiskBlurredScore v-else-if="pulseOf(buyer)?.onAchilles" :seed="buyer.id" :label="`RiskPulse score: ${pulseStatus(buyer)}`" />
-                        <span v-else class="sc__pulse-state">Not on Achilles</span>
+                        <RiskBlurredScore v-else :seed="buyer.npwp" :label="`RiskPulse score: ${pulseStatus(buyer)}`" />
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="left">RiskPulse score · {{ pulseStatus(buyer) }}</TooltipContent>
@@ -769,11 +768,6 @@ function notInPrototype(feature: string) {
   font-variant-numeric: tabular-nums;
 }
 
-.sc__pulse-state {
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-xs);
-  line-height: var(--primitives-line-heights-xs);
-}
 
 .sc__option-empty {
   padding: var(--primitives-padding-2) var(--primitives-padding-3);

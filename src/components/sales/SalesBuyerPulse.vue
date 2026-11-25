@@ -18,7 +18,7 @@ import { useSnackbar } from '@/composables/useSnackbar'
  */
 const props = defineProps<{ npwp: string; email: string; name: string }>()
 
-const { partners, lookup, addFromDirectory, request, resend } = usePartnerAccess()
+const { partners, lookup, addFromDirectory, addBuyer, request, resend } = usePartnerAccess()
 const { show } = useSnackbar()
 
 const digits = computed(() => npwpDigits(props.npwp))
@@ -35,13 +35,13 @@ const registered = computed(() => {
 
 const company = computed(() => partner.value?.name ?? registered.value?.name ?? (props.name.trim() || 'This buyer'))
 
-type State = 'shared' | 'hidden' | 'pending' | 'declined' | 'outside'
+// Every company has a score from its tax data, so there is no "no score" state: unshared is simply hidden.
+type State = 'shared' | 'hidden' | 'pending' | 'declined'
 const state = computed<State>(() => {
   if (partner.value?.status === 'unlocked') return 'shared'
   if (partner.value?.status === 'pending') return 'pending'
   if (partner.value?.status === 'declined') return 'declined'
-  if (registered.value || partner.value?.onAchilles) return 'hidden'
-  return 'outside'
+  return 'hidden'
 })
 
 // What each band means for a buyer, in one plain line. Descriptive only: never a credit decision.
@@ -64,10 +64,8 @@ const caption = computed(() => {
       return `Waiting for ${company.value} to approve. Sent ${partner.value?.requestedOn}.`
     case 'declined':
       return `${company.value} declined your last request. You can ask again.`
-    case 'hidden':
-      return 'Lower the risk on this deal by knowing who you sell to. Request their score to see it.'
     default:
-      return `${company.value} is not on Achilles yet, so there is no score to share. Invite them to join.`
+      return 'Lower the risk on this deal by knowing who you sell to. Request their score to see it.'
   }
 })
 
@@ -75,6 +73,7 @@ const requestOpen = ref(false)
 
 function openRequest() {
   if (registered.value) addFromDirectory(registered.value.id)
+  else if (!partner.value) addBuyer({ name: company.value, npwp: props.npwp, email: props.email })
   requestOpen.value = true
 }
 
@@ -88,15 +87,6 @@ async function copyLink() {
   }
 }
 
-// Prototype: an invite to a company outside Achilles carries the consent request with it.
-function invite() {
-  if (!props.email) {
-    show({ variant: 'neutral', title: 'Add the buyer email first', description: 'The invite goes to that address.' })
-    document.getElementById('buyer-email')?.focus()
-    return
-  }
-  show({ variant: 'success', title: `Invite sent to ${props.email}`, description: 'Their score opens once they join Achilles and approve.' })
-}
 
 function focusPanel() {
   document.getElementById('buyer-pulse')?.focus()
@@ -125,10 +115,9 @@ function focusPanel() {
           <RiskIconAction icon="/icons/communications/forward-to-inbox.svg" label="Resend email" :aria-label="`Resend request email to ${partner.name}`" @click="resend(partner.id)" />
         </template>
         <!-- White on the glow: the one action here, without the weight of a dark primary button. -->
-        <Button v-else-if="state === 'hidden' || state === 'declined'" class="bp__request" color="inverse" size="small" type="button" @click="openRequest">
+        <Button v-else class="bp__request" color="inverse" size="small" type="button" @click="openRequest">
           {{ state === 'declined' ? 'Request again' : 'Request score' }}
         </Button>
-        <Button v-else class="bp__invite" variant="outline" color="neutral" size="small" type="button" @click="invite">Invite</Button>
       </div>
     </header>
 
@@ -156,8 +145,7 @@ function focusPanel() {
           <p class="bp__value"><span class="bp__number">{{ partner.score.toFixed(1) }}</span><span class="bp__scale">/5</span></p>
           <p class="bp__note">Shared until {{ partner.accessUntil }}</p>
         </template>
-        <RiskBlurredScore v-else-if="state !== 'outside'" size="lg" :seed="company" />
-        <p v-else class="bp__none">No score yet</p>
+        <RiskBlurredScore v-else size="lg" :seed="partner?.npwp ?? digits" />
       </div>
     </div>
 
@@ -311,13 +299,6 @@ function focusPanel() {
   white-space: nowrap;
 }
 
-.bp__none {
-  margin: 0;
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-sm);
-  font-weight: 600;
-  white-space: nowrap;
-}
 
 .bp__request.ach-button--solid.ach-button--color-inverse {
   border: 0;
@@ -328,9 +309,4 @@ function focusPanel() {
       var(--primitives-shadows-sm-color);
 }
 
-.bp__invite.ach-button--outlined.ach-button--color-neutral {
-  /* The Credor secondary action, as on the homepage cards: a light border on a pill. */
-  border-color: var(--component-card-border);
-  border-radius: var(--primitives-border-radius-infinite);
-}
 </style>

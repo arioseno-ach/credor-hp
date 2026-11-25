@@ -22,8 +22,8 @@ const shape = computed(() => {
 <template>
   <span class="blur-score" :data-size="size">
     <span class="blur-score__shape" aria-hidden="true">
-      <span class="blur-score__number">{{ shape.number }}</span>
       <span class="blur-score__chip" :style="{ background: shape.band }">Band</span>
+      <span class="blur-score__number">{{ shape.number }}</span>
     </span>
     <span class="sr-only">{{ label }}</span>
   </span>
