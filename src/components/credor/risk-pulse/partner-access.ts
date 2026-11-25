@@ -71,6 +71,11 @@ export function formatNpwp(npwp: string): string {
 const extras = [
   { id: 'baja-perkasa', name: 'PT Baja Perkasa Konstruksi', initials: 'BP', lastTransaction: '2 months ago' },
   { id: 'sinar-pangan', name: 'CV Sinar Pangan Lestari', initials: 'SP', lastTransaction: '4 months ago' },
+  // Shared scores across every band, Poor to Excellent (Sumber Logistik is the Very Good one).
+  { id: 'arunika-tekstil', name: 'PT Arunika Tekstil Nusantara', initials: 'AT', lastTransaction: '1 month ago' },
+  { id: 'bintang-retail', name: 'PT Bintang Retail Sejahtera', initials: 'BR', lastTransaction: '3 weeks ago' },
+  { id: 'cahaya-farma', name: 'PT Cahaya Farma Indonesia', initials: 'CF', lastTransaction: '9 days ago' },
+  { id: 'delta-energi', name: 'PT Delta Energi Lestari', initials: 'DE', lastTransaction: '5 days ago' },
 ]
 
 const setup: Record<string, Pick<PartnerScore, 'npwp' | 'onAchilles' | 'authKeyReady' | 'score' | 'updatedOn' | 'status' | 'requestedOn' | 'accessUntil' | 'email' | 'consentCode'>> = {
@@ -80,6 +85,10 @@ const setup: Record<string, Pick<PartnerScore, 'npwp' | 'onAchilles' | 'authKeyR
   'karya-utama': { npwp: '0928374651023000', onAchilles: false, authKeyReady: false, score: 3.1, updatedOn: '01 Nov 2026', status: 'locked', email: 'finance@karyautama.co.id' },
   'baja-perkasa': { npwp: '0164738291045000', onAchilles: true, authKeyReady: true, score: 1.6, updatedOn: '01 Nov 2026', status: 'declined', requestedOn: '10 Nov 2026', email: 'keuangan@bajaperkasa.co.id', consentCode: '82E0DFA84B148ADA' },
   'sinar-pangan': { npwp: '0582910374615000', onAchilles: true, authKeyReady: true, score: 3.5, updatedOn: '01 Nov 2026', status: 'pending', requestedOn: '20 Nov 2026', consentCode: '5C02E9A71B44F8D3', email: 'admin@sinarpangan.co.id' },
+  'arunika-tekstil': { npwp: '0127483956012000', onAchilles: true, authKeyReady: true, score: 1.4, updatedOn: '01 Nov 2026', status: 'unlocked', requestedOn: '02 Nov 2026', accessUntil: '31 Jan 2027', email: 'finance@arunikatekstil.co.id', consentCode: 'A41C7E02D9B35F68' },
+  'bintang-retail': { npwp: '0236594817023000', onAchilles: true, authKeyReady: true, score: 2.2, updatedOn: '01 Nov 2026', status: 'unlocked', requestedOn: '05 Nov 2026', accessUntil: '03 Feb 2027', email: 'keuangan@bintangretail.co.id', consentCode: 'B72D18F4C0E96A35' },
+  'cahaya-farma': { npwp: '0345716920834000', onAchilles: true, authKeyReady: true, score: 3.0, updatedOn: '01 Nov 2026', status: 'unlocked', requestedOn: '08 Nov 2026', accessUntil: '06 Feb 2027', email: 'treasury@cahayafarma.co.id', consentCode: 'C3E9A15B7D204F81' },
+  'delta-energi': { npwp: '0458203619745000', onAchilles: true, authKeyReady: true, score: 4.6, updatedOn: '01 Nov 2026', status: 'unlocked', requestedOn: '12 Nov 2026', accessUntil: '10 Feb 2027', email: 'finance@deltaenergi.co.id', consentCode: 'D85F2C6A1E39B074' },
 }
 
 export function initialPartnerScores(): PartnerScore[] {
