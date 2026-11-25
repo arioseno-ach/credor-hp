@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref } from 'vue'
 import { Button } from '@/components/ui/button'
-import { verifiedCompany } from '@/components/credor/personalisation'
 import { usePartnerAccess } from '@/composables/usePartnerAccess'
 import { useSegmentedIndicator } from '@/composables/useSegmentedIndicator'
 import { useSnackbar } from '@/composables/useSnackbar'
@@ -25,26 +24,22 @@ const tabs = computed(() => [
     label: 'Portfolio',
     badge: partners.value.filter((partner) => partner.status === 'locked').length,
     badgeLabel: 'scores you can request',
-    intro: 'Companies you transact with. The requests you send them show under Your request.',
   },
   {
     id: 'requests' as const,
     label: 'Received',
     badge: received.value.filter((item) => item.status === 'pending').length,
     badgeLabel: 'requests to answer',
-    intro: 'Other companies asking to see your Company Health report. Nothing is shared until you accept.',
   },
   {
     id: 'granted' as const,
     label: 'Access granted',
     badge: 0,
     badgeLabel: '',
-    intro: 'Companies you accepted. They can see your report until their access ends or you revoke it.',
   },
 ])
 
 const tab = ref<Tab>('portfolio')
-const activeTab = computed(() => tabs.value.find((item) => item.id === tab.value)!)
 const tablist = ref<HTMLElement | null>(null)
 const { indicatorStyle, ready } = useSegmentedIndicator(tablist, () => tab.value)
 
@@ -98,11 +93,19 @@ async function answerRequests() {
         <span class="pp__back-icon" aria-hidden="true"></span>
         Back to Company Health
       </button>
-      <h1 class="pp__title">Partners</h1>
-      <p class="pp__text">
-        Company Health reports of the companies {{ verifiedCompany.name }} works with. A report opens once the company
-        agrees to share it.
-      </p>
+      <div class="pp__title-row">
+        <h1 class="pp__title">Partners</h1>
+        <Button
+          variant="outline"
+          color="neutral"
+          size="small"
+          type="button"
+          class="pp__lookup"
+          @click="openLookup"
+        >
+          Request by NPWP
+        </Button>
+      </div>
     </header>
 
     <section aria-label="Overview">
@@ -145,13 +148,6 @@ async function answerRequests() {
       </div>
 
       <div id="pp-panel" class="pp__panel" role="tabpanel" tabindex="0" :aria-labelledby="`pp-tab-${tab}`">
-        <!-- Says whose requests these are, so no row has to be read to know the direction. -->
-        <div class="pp__intro-row">
-          <p class="pp__intro">{{ activeTab.intro }}</p>
-          <Button variant="outline" color="neutral" size="small" type="button" @click="openLookup">
-            Request by NPWP
-          </Button>
-        </div>
         <RiskPartnerPortfolio
           v-if="tab === 'portfolio'"
           ref="portfolio"
@@ -230,6 +226,14 @@ async function answerRequests() {
   -webkit-mask: url('/icons/ui-actions/arrow-back.svg') center / contain no-repeat;
 }
 
+.pp__title-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--primitives-padding-4);
+}
+
 .pp__title {
   margin: 0;
   font-family: var(--primitives-font-families-display), sans-serif;
@@ -242,16 +246,6 @@ async function answerRequests() {
   outline: none;
 }
 
-.pp__text {
-  max-width: 64ch;
-  margin: 0;
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-sm);
-  line-height: var(--primitives-line-heights-sm);
-}
-
-
-
 .pp__toolbar {
   display: flex;
   border-bottom: var(--primitives-border-width-default) solid var(--component-tabs-line-border);
@@ -261,10 +255,15 @@ async function answerRequests() {
 .pp__tabs {
   position: relative;
   display: flex;
+  min-width: 0;
   max-width: 100%;
   gap: var(--primitives-padding-6);
   overflow-x: auto;
   scrollbar-width: none;
+}
+
+.pp__lookup {
+  flex: none;
 }
 
 .pp__tab {
@@ -331,15 +330,7 @@ async function answerRequests() {
   display: flex;
   min-width: 0;
   flex-direction: column;
-  gap: var(--primitives-padding-4);
-}
-
-.pp__intro-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--primitives-padding-3);
+  gap: var(--primitives-padding-2);
 }
 
 .pp__panel {
@@ -353,11 +344,10 @@ async function answerRequests() {
   outline-offset: var(--primitives-border-width-2);
 }
 
-.pp__intro {
-  margin: 0;
-  color: var(--semantic-text-ach-color-text-secondary);
-  font-size: var(--primitives-font-sizes-sm);
-  line-height: var(--primitives-line-heights-sm);
-}
 
+.pp__lookup.ach-button--outlined.ach-button--color-neutral {
+  /* The Credor secondary action, as on the homepage cards: a light border on a pill. */
+  border-color: var(--component-card-border);
+  border-radius: var(--primitives-border-radius-infinite);
+}
 </style>

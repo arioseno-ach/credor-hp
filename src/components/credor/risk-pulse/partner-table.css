@@ -1,4 +1,4 @@
-/* Shared by the Partners page tables: tinted uppercase header, name over NPWP, actions last. With no card around it, the last row keeps its line to close the table. */
+/* Shared by the Partners page tables: borderless sentence-case header, crisp hairlines, name over NPWP, actions flush right. */
 .table-wrap {
   overflow-x: auto;
 }
@@ -7,27 +7,42 @@
   width: 100%;
   min-width: 720px;
   border-collapse: collapse;
+  color: var(--semantic-text-ach-color-text-default);
   font-size: var(--primitives-font-sizes-sm);
   line-height: var(--primitives-line-heights-sm);
 }
 
 .ptable thead th {
-  padding: var(--primitives-padding-3) var(--primitives-padding-4);
-  border-block: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
-  background: var(--semantic-bg-ach-color-bg-surface-secondary);
+  padding: var(--primitives-padding-2) var(--primitives-padding-4) var(--primitives-padding-3);
+  border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+  background: transparent;
   color: var(--semantic-text-ach-color-text-secondary);
   font-size: var(--primitives-font-sizes-xs);
   font-weight: 600;
-  letter-spacing: 0.04em;
   line-height: var(--primitives-line-heights-xs);
   text-align: left;
-  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.ptable thead th:first-child,
+.ptable tbody th:first-child,
+.ptable tbody td:first-child {
+  padding-left: 0;
+}
+
+.ptable thead th:last-child,
+.ptable tbody td:last-child {
+  padding-right: 0;
+}
+
+.ptable thead th.ptable__actions-head,
+.ptable td.ptable__actions {
+  text-align: right;
 }
 
 .ptable td,
 .ptable tbody th {
-  padding: var(--primitives-padding-4);
+  padding: var(--primitives-padding-3) var(--primitives-padding-4);
   border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
   font-weight: 400;
   text-align: left;
@@ -37,6 +52,11 @@
 /* Rows take focus from the NPWP lookup and after replies; keep them clear of the sticky top bar. */
 .ptable tbody tr {
   scroll-margin-top: var(--rp-bar-offset, var(--component-topbar-height));
+  transition: background-color var(--semantic-motion-duration-fast) ease;
+}
+
+.ptable tbody tr:hover {
+  background: var(--semantic-bg-ach-color-bg-canvas);
 }
 
 .ptable tbody tr:focus {
@@ -45,17 +65,24 @@
 
 .ptable__name {
   display: block;
+  color: var(--semantic-text-ach-color-text-default);
   font-weight: 600;
 }
 
 .ptable__sub {
   display: block;
   margin-top: 2px;
-  color: var(--semantic-text-ach-color-text-secondary);
+  color: var(--semantic-text-ach-color-text-subtle);
   font-size: var(--primitives-font-sizes-xs);
   line-height: var(--primitives-line-heights-xs);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.ptable__muted {
+  color: var(--semantic-text-ach-color-text-subtle);
+  font-size: var(--primitives-font-sizes-xs);
+  line-height: var(--primitives-line-heights-xs);
 }
 
 /* Company names wrap; NPWPs, codes, emails and dates stay on one line. */
@@ -64,11 +91,13 @@
 }
 
 .ptable td {
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
 /* Emails may wrap, but only after the @ (a <wbr> in the markup). */
 .ptable td.ptable__email {
+  color: var(--semantic-text-ach-color-text-secondary);
   white-space: normal;
   overflow-wrap: normal;
 }
@@ -81,7 +110,26 @@
   margin-left: var(--primitives-padding-2);
 }
 
+.ptable__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--primitives-padding-3);
+  color: var(--semantic-text-ach-color-text-subtle);
+  font-size: var(--primitives-font-sizes-xs);
+  line-height: var(--primitives-line-heights-xs);
+  font-variant-numeric: tabular-nums;
+}
+
 .ptable__empty {
   margin: 0;
+  padding-top: var(--primitives-padding-2);
   color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ptable tbody tr {
+    transition: none;
+  }
 }

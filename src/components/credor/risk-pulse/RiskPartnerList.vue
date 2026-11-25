@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import RiskBandChip from './RiskBandChip.vue'
+import RiskBlurredScore from './RiskBlurredScore.vue'
 import RiskIconAction from './RiskIconAction.vue'
 import { canConsent, type PartnerScore } from './partner-access'
 
@@ -69,10 +70,11 @@ const visible = computed(() => (props.limit ? props.partners.slice(0, props.limi
 
         <template v-else>
           <p class="partner__status">
-            <img src="/icons/common-actions/lock.svg" alt="" aria-hidden="true" class="partner__icon">
-            {{ partner.status === 'declined' ? 'Request declined' : 'Score locked' }}
+            <RiskBlurredScore v-if="partner.onAchilles" :seed="partner.id" />
+            <span class="partner__note">{{ partner.status === 'declined' ? 'Request declined' : partner.onAchilles ? 'Not shared yet' : 'Not on Achilles' }}</span>
           </p>
           <Button
+            class="partner__action"
             variant="outline"
             color="neutral"
             size="small"
@@ -199,5 +201,11 @@ const visible = computed(() => (props.limit ? props.partners.slice(0, props.limi
     align-items: flex-start;
     text-align: left;
   }
+}
+
+.partner__action.ach-button--outlined.ach-button--color-neutral {
+  /* The Credor secondary action, as on the homepage cards: a light border on a pill. */
+  border-color: var(--component-card-border);
+  border-radius: var(--primitives-border-radius-infinite);
 }
 </style>

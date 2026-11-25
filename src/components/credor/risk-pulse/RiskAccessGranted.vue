@@ -80,6 +80,9 @@ function restoreFocus(event: Event) {
         </tr>
       </tbody>
     </table>
+    <div class="ptable__footer">
+      <span>1-{{ granted.length }} of {{ granted.length }} {{ granted.length === 1 ? 'result' : 'results' }}</span>
+    </div>
   </div>
   <p v-else class="ptable__empty">You are not sharing your Company Health report with any company.</p>
 

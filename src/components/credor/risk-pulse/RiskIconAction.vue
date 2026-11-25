@@ -20,6 +20,7 @@ const emits = defineEmits<{ click: [] }>()
       <Button
         v-if="href"
         as="a"
+        class="icon-action"
         variant="outline"
         color="neutral"
         size="icon-sm"
@@ -32,6 +33,7 @@ const emits = defineEmits<{ click: [] }>()
       </Button>
       <Button
         v-else
+        class="icon-action"
         variant="outline"
         color="neutral"
         size="icon-sm"
@@ -53,5 +55,11 @@ const emits = defineEmits<{ click: [] }>()
   background: currentcolor;
   mask: var(--icon) center / contain no-repeat;
   -webkit-mask: var(--icon) center / contain no-repeat;
+}
+
+.icon-action.ach-button--outlined.ach-button--color-neutral {
+  /* The Credor secondary action, as on the homepage cards: a light border on a pill. */
+  border-color: var(--component-card-border);
+  border-radius: var(--primitives-border-radius-infinite);
 }
 </style>

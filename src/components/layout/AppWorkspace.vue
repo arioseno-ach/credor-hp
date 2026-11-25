@@ -19,20 +19,25 @@ import CredorApplicationDetail from '@/components/credor/CredorApplicationDetail
 import CredorTransactionsPage from '@/components/credor/CredorTransactionsPage.vue'
 import CredorRiskPulsePage from '@/components/credor/risk-pulse/CredorRiskPulsePage.vue'
 import RiskPartnersPage from '@/components/credor/risk-pulse/RiskPartnersPage.vue'
+import SalesTransactionsPage from '@/components/sales/SalesTransactionsPage.vue'
+import SalesCreatePage from '@/components/sales/SalesCreatePage.vue'
 import { useAppView } from '@/composables/useAppView'
 import ScenarioSwitcher from '@/components/prototype/ScenarioSwitcher.vue'
 import CredorFinancingSidebar from '@/components/credor/CredorFinancingSidebar.vue'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 
 const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
-const { view } = useAppView()
+const { view, openSales, goHome } = useAppView()
 const mobileNavOpen = computed(() => isMobile.value && openMobile.value)
 
 const { state, bannerVariant, showAlert, showPartners, showTransactions, showLoanSimulationInMain } =
   usePrototypeState()
 
-function closeMobileNav() {
+function closeMobileNav(label?: string) {
   if (isMobile.value) setOpenMobile(false)
+  // Prototype: only these sidebar items have pages.
+  if (label === 'Sales Transaction') openSales()
+  else if (label === 'Home' || label === 'Cash & Financing') goHome()
 }
 </script>
 
@@ -57,6 +62,12 @@ function closeMobileNav() {
       </main>
       <main v-else-if="view.name === 'risk-pulse'" class="app-content">
         <CredorRiskPulsePage :key="state.modules.riskPulse ?? 'ready'" />
+      </main>
+      <main v-else-if="view.name === 'sales'" class="app-content">
+        <SalesTransactionsPage />
+      </main>
+      <main v-else-if="view.name === 'sales-create'" class="app-content">
+        <SalesCreatePage />
       </main>
       <main v-else-if="view.name === 'partners'" class="app-content">
         <RiskPartnersPage />

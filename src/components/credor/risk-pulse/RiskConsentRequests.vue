@@ -79,6 +79,9 @@ function focusRow() {
         </tr>
       </tbody>
     </table>
+    <div class="ptable__footer">
+      <span>1-{{ received.length }} of {{ received.length }} {{ received.length === 1 ? 'result' : 'results' }}</span>
+    </div>
   </div>
   <p v-else class="ptable__empty">No company has asked to see your report yet.</p>
 
