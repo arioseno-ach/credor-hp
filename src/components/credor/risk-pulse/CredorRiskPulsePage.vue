@@ -31,13 +31,28 @@ import RiskAreaTable from './RiskAreaTable.vue'
 import RiskFactorRow from './RiskFactorRow.vue'
 import RiskGauge from './RiskGauge.vue'
 import RiskIndicatorList from './RiskIndicatorList.vue'
+import RiskPartnerPortfolio from './RiskPartnerPortfolio.vue'
+import { Avatar } from '@/components/ui/avatar'
+import { formatNpwp, PARTNER_REPORT_URL } from './partner-access'
+import { usePartnerAccess } from '@/composables/usePartnerAccess'
 import RiskScoreHead from './RiskScoreHead.vue'
 
-const { goHome, openApply } = useAppView()
+/** Set when reading a partner's report they shared; the page then hides everything about the signed-in company. */
+const props = defineProps<{ partnerId?: string }>()
+
+const { goHome, openApply, openPartners } = useAppView()
 const { show } = useSnackbar()
 const { state: prototype, setRiskPulse } = usePrototypeState()
 
-const view = computed(() => prototype.modules.riskPulse ?? 'ready')
+// Partner scores: locked until the partner accepts a request (simulated email and consent).
+const { partners } = usePartnerAccess()
+const PARTNER_PREVIEW = 5
+const partner = computed(() => (props.partnerId ? partners.value.find((item) => item.id === props.partnerId) : undefined))
+
+const view = computed(() => {
+  if (props.partnerId) return partner.value?.status === 'unlocked' ? 'ready' : 'revoked'
+  return prototype.modules.riskPulse ?? 'ready'
+})
 const isReady = computed(() => view.value === 'ready')
 const summary = computed(() => (prototype.modules.summaryDown ? verdictFallback(report.value, summaryTier(overall.value)) : verdict))
 
@@ -55,8 +70,23 @@ const statusCopy = {
     headline: 'We could not load your Company Health.',
     body: 'Something went wrong on our side. Your data is safe. Try again in a moment.',
   },
+  revoked: {
+    headline: 'Your access to this report has ended.',
+    body: 'The company no longer shares its Company Health with you. You can request it again from Partners.',
+  },
 } as const
-const verdictCopy = computed(() => (view.value === 'ready' ? summary.value : statusCopy[view.value]))
+const verdictCopy = computed(() => {
+  if (view.value !== 'ready') return statusCopy[view.value]
+  // The demo verdict speaks to the signed-in company, so a partner's report gets a neutral one.
+  if (partner.value) {
+    return {
+      // The name and the access period are already in the header and the shared strip.
+      headline: `In the ${band.value} band.`,
+      body: 'The areas below explain how this company scores.',
+    }
+  }
+  return summary.value
+})
 
 /** The support channel is outside this prototype, so the action only says where it leads. */
 function contactUs() {
@@ -68,7 +98,7 @@ function contactUs() {
 }
 
 /** Prototype report, rewritten on the same 1 to 5 baseline as this page. */
-const reportUrl = `${import.meta.env.BASE_URL}reports/risk-pulse-report-demo.html`
+const reportUrl = PARTNER_REPORT_URL
 
 // Newest month first; the latest is the real preview, earlier months are prototype history.
 const monthKey = ref(riskPulseMonths[0].key)
@@ -85,7 +115,8 @@ const simulated = computed(() => {
   const tier = prototype.modules.scoreTier
   return tier && tier !== 'auto' ? simulatedScores[tier] : null
 })
-const overall = computed(() => simulated.value ?? report.value.overall)
+// shortcut: a partner's report shows its own score over the demo areas; a real report brings its own data.
+const overall = computed(() => partner.value?.score ?? simulated.value ?? report.value.overall)
 const counts = computed(() => coverage(report.value))
 const areas = computed(() => sortMacroToMicro(getAreas(report.value)))
 
@@ -95,10 +126,12 @@ const startingRate = computed(() => companyHealthCategories[scoreBandIndex(overa
 
 /** Change against the month before; null for the oldest month. */
 const overallDelta = computed(() =>
-  previousMonth.value && simulated.value === null ? scoreDelta(overall.value, previousMonth.value.report.overall) : null,
+  previousMonth.value && simulated.value === null && !partner.value ? scoreDelta(overall.value, previousMonth.value.report.overall) : null,
 )
 
 function areaDelta(areaId: string) {
+  // Month-on-month changes are the signed-in company's history, so a partner's report shows none.
+  if (partner.value) return null
   const current = report.value.layers.find((layer) => layer.id === areaId)
   const previous = previousMonth.value?.report.layers.find((layer) => layer.id === areaId)
   return current && previous ? scoreDelta(current.score, previous.score) : null
@@ -108,13 +141,16 @@ function deltaTone(delta: number) {
   return delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat'
 }
 
-const chapters = [
+const allChapters = [
   { id: 'rp-verdict', label: 'Verdict' },
   // What's working and Needs attention sit side by side, so they share one nav stop.
   { id: 'rp-highlights', label: 'Highlights' },
   { id: 'rp-breakdown', label: 'Breakdown' },
   { id: 'rp-improve', label: 'How to improve' },
+  { id: 'rp-partners', label: 'Partners' },
 ]
+// A partner's report stops after Breakdown: improving and partners are about the signed-in company. The page is keyed per partner, so this never changes after setup.
+const chapters = props.partnerId ? allChapters.slice(0, 3) : allChapters
 
 const stories = computed(
   () =>
@@ -274,12 +310,27 @@ watch(activeId, async () => {
 <template>
   <div class="rp">
     <header class="rp__header">
-      <button type="button" class="rp__back" @click="goHome('risk-card-view-details')">
+      <button v-if="partnerId" type="button" class="rp__back" @click="openPartners()">
+        <span class="rp__back-icon" aria-hidden="true"></span>
+        Back to Partners
+      </button>
+      <button v-else type="button" class="rp__back" @click="goHome('risk-card-view-details')">
         <span class="rp__back-icon" aria-hidden="true"></span>
         Back to Home
       </button>
       <div class="rp__title-row">
-        <div class="rp__title-block">
+        <!-- A partner's report leads with who it belongs to, so it never reads as your own. -->
+        <div v-if="partner" class="rp__title-block rp__title-block--partner">
+          <Avatar :initials="partner.initials" />
+          <div>
+            <p class="rp__eyebrow">Shared report · Company Health</p>
+            <h1 id="risk-pulse-title" ref="titleHeading" class="rp__title" tabindex="-1">{{ partner.name }}</h1>
+            <p class="rp__subtitle">
+              NPWP {{ formatNpwp(partner.npwp) }}<template v-if="isReady"> · Last update: {{ partner.updatedOn }}</template>
+            </p>
+          </div>
+        </div>
+        <div v-else class="rp__title-block">
           <h1 id="risk-pulse-title" ref="titleHeading" class="rp__title" tabindex="-1">Your Company Health</h1>
           <p class="rp__subtitle">
             {{ verifiedCompany.name }}
@@ -288,7 +339,8 @@ watch(activeId, async () => {
           </p>
         </div>
         <div v-if="isReady" class="rp__actions">
-          <span class="rp__month">
+          <!-- A partner shares one report; the month history is the signed-in company's own. -->
+          <span v-if="!partner" class="rp__month">
             <select v-model="monthKey" class="rp__month-select" aria-label="Report month">
               <option v-for="item in riskPulseMonths" :key="item.key" :value="item.key">
                 {{ item.label }}
@@ -311,13 +363,20 @@ watch(activeId, async () => {
             rel="noopener"
           >
             <!-- One demo file for every month; only the month in the label follows the selection. -->
-            {{ month.label }} report
+            {{ partner ? 'Download PDF' : `${month.label} report` }}
             <span class="rp__download-icon" aria-hidden="true"></span>
             <span class="sr-only">(opens in a new tab)</span>
           </Button>
         </div>
       </div>
     </header>
+
+    <p v-if="partner && isReady" class="rp__shared" role="note">
+      <span class="rp__shared-icon" aria-hidden="true"></span>
+      <span>
+        <strong>{{ partner.name }}</strong> shared this report with you. Read only, until {{ partner.accessUntil }}.
+      </span>
+    </p>
 
     <nav v-if="isReady" class="rp__nav" aria-label="Page sections">
       <ul ref="navList" class="rp__nav-list">
@@ -357,6 +416,9 @@ watch(activeId, async () => {
         </div>
         <div v-else-if="view === 'error'">
           <Button type="button" variant="outline" color="neutral" @click="setRiskPulse('ready')">Try again</Button>
+        </div>
+        <div v-else-if="view === 'revoked'">
+          <Button type="button" variant="outline" color="neutral" @click="openPartners()">Back to Partners</Button>
         </div>
         <p v-if="isReady" class="rp__note">
           <span v-if="overallDelta !== null" class="rp__delta" :class="`rp__delta--${deltaTone(overallDelta)}`">
@@ -445,7 +507,7 @@ watch(activeId, async () => {
       </div>
     </section>
 
-    <section :id="chapters[3].id" class="rp__chapter rp__card" aria-labelledby="rp-improve-title">
+    <section v-if="!partnerId" :id="chapters[3].id" class="rp__chapter rp__card" aria-labelledby="rp-improve-title">
       <div class="rp__improve">
         <h2 id="rp-improve-title" class="rp__h2" tabindex="-1">{{ chapters[3].label }}</h2>
         <ol class="rp__steps">
@@ -470,7 +532,20 @@ watch(activeId, async () => {
       </div>
     </section>
 
-    <section class="rp__chapter rp__closing rp__card" aria-labelledby="rp-next-title">
+    <section v-if="!partnerId" :id="chapters[4].id" class="rp__chapter rp__card" aria-labelledby="rp-partners-title">
+      <div class="rp__partners-head">
+        <h2 id="rp-partners-title" class="rp__h2" tabindex="-1">{{ chapters[4].label }}</h2>
+        <p class="rp__text">
+          Companies you have transacted with. Their Company Health report opens once they agree to share it.
+        </p>
+      </div>
+      <RiskPartnerPortfolio :partners="partners" :limit="PARTNER_PREVIEW" />
+      <Button variant="link" type="button" class="rp__see-all" @click="openPartners()">
+        See all {{ partners.length }} partners
+      </Button>
+    </section>
+
+    <section v-if="!partnerId" class="rp__chapter rp__closing rp__card" aria-labelledby="rp-next-title">
       <h2 id="rp-next-title" class="rp__h2">Next step</h2>
       <p class="rp__text">
         Companies in the {{ band }} band may qualify for rates from {{ startingRate }}% per month.
@@ -500,6 +575,11 @@ watch(activeId, async () => {
   --rp-bar-offset: calc(var(--component-topbar-height) + var(--primitives-padding-12));
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
+}
+
+.rp__see-all {
+  align-self: flex-start;
+  padding: 0;
 }
 
 /* Header */
@@ -560,6 +640,45 @@ watch(activeId, async () => {
   font-size: var(--primitives-font-sizes-2xl);
   font-weight: 700;
   line-height: var(--primitives-line-heights-2xl);
+}
+
+.rp__title-block--partner {
+  display: flex;
+  align-items: center;
+  gap: var(--primitives-padding-4);
+}
+
+.rp__eyebrow {
+  margin: 0;
+  color: var(--semantic-text-ach-color-text-link);
+  font-size: var(--primitives-font-sizes-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: var(--primitives-line-heights-xs);
+  text-transform: uppercase;
+}
+
+/* Says whose report this is before any score, on the illustration tint the consent flow uses. */
+.rp__shared {
+  display: flex;
+  align-items: center;
+  gap: var(--primitives-padding-2);
+  margin: 0 0 var(--primitives-padding-4);
+  padding: var(--primitives-padding-3) var(--primitives-padding-4);
+  border: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-illustration);
+  border-radius: var(--primitives-border-radius-md);
+  background: var(--semantic-bg-ach-color-bg-illustration-tint);
+  font-size: var(--primitives-font-sizes-sm);
+  line-height: var(--primitives-line-heights-sm);
+}
+
+.rp__shared-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background: var(--semantic-text-ach-color-text-link);
+  mask: url('/icons/common-actions/visibility.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/common-actions/visibility.svg') center / contain no-repeat;
 }
 
 .rp__subtitle {
@@ -832,14 +951,22 @@ watch(activeId, async () => {
 .rp__cell {
   display: grid;
   min-width: 0;
-  container-type: inline-size;
+  /* No container-type here: layout containment turns a subgrid into a plain grid, so the two lists never shared rows. */
   grid-row: span var(--rp-rows, 4);
   grid-template-rows: subgrid;
+  /* A subgrid with its own row gap offsets its edge rows against the pair's tracks, which put the two lists out of step. */
+  row-gap: 0;
+}
+
+/* Figma: 24px from the card title to the first category, as margin so it is part of the shared heading track. */
+.rp__cell > .rp__h2 {
+  margin-bottom: var(--primitives-padding-6);
 }
 
 /* The list covers every category track; the heading takes the first one. */
 .rp__cell > .rp__rows {
   display: grid;
+  row-gap: 0;
   grid-row: span var(--rp-rows-content, 3);
   grid-template-rows: subgrid;
 }
@@ -902,8 +1029,11 @@ watch(activeId, async () => {
   list-style: none;
 }
 
+/* Figma: 24px above and 24px below every divider; the card's own padding closes the last row. */
 .rp__rows > li {
-  padding: var(--primitives-padding-5) 0;
+  padding: var(--primitives-padding-6) 0;
+  /* The row heads switch to their narrow layout by the width of their own row. */
+  container-type: inline-size;
 }
 
 .rp__rows > li + li {
@@ -912,6 +1042,10 @@ watch(activeId, async () => {
 
 .rp__rows > li:first-child {
   padding-top: 0;
+}
+
+.rp__rows > li:last-child {
+  padding-bottom: 0;
 }
 
 .rp__evidence {
@@ -936,7 +1070,8 @@ watch(activeId, async () => {
 
 /* 5 How to improve */
 /* The steps are what the owner can act on, so the card carries the whole section. */
-.rp__improve {
+.rp__improve,
+.rp__partners-head {
   display: flex;
   flex-direction: column;
   gap: var(--primitives-padding-2);

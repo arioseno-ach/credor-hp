@@ -3,14 +3,19 @@ import { ToastProvider } from 'reka-ui'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Snackbar, SnackbarViewport } from '@/components/ui/snackbar'
 import AppWorkspace from '@/components/layout/AppWorkspace.vue'
+import RiskConsentPage from '@/components/credor/risk-pulse/RiskConsentPage.vue'
+import { useAppView } from '@/composables/useAppView'
 import { useSnackbar } from '@/composables/useSnackbar'
 
 const snackbar = useSnackbar()
+const { view } = useAppView()
 </script>
 
 <template>
   <ToastProvider>
-    <SidebarProvider>
+    <!-- The partner opens the consent page from an email without signing in, so it has no app shell. -->
+    <RiskConsentPage v-if="view.name === 'consent'" :partner-id="view.partnerId" />
+    <SidebarProvider v-else>
       <AppWorkspace />
     </SidebarProvider>
 

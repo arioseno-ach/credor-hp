@@ -1,0 +1,87 @@
+/* Shared by the Partners page tables: tinted uppercase header, name over NPWP, actions last. With no card around it, the last row keeps its line to close the table. */
+.table-wrap {
+  overflow-x: auto;
+}
+
+.ptable {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+  font-size: var(--primitives-font-sizes-sm);
+  line-height: var(--primitives-line-heights-sm);
+}
+
+.ptable thead th {
+  padding: var(--primitives-padding-3) var(--primitives-padding-4);
+  border-block: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+  background: var(--semantic-bg-ach-color-bg-surface-secondary);
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: var(--primitives-line-heights-xs);
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ptable td,
+.ptable tbody th {
+  padding: var(--primitives-padding-4);
+  border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
+  font-weight: 400;
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Rows take focus from the NPWP lookup and after replies; keep them clear of the sticky top bar. */
+.ptable tbody tr {
+  scroll-margin-top: var(--rp-bar-offset, var(--component-topbar-height));
+}
+
+.ptable tbody tr:focus {
+  outline: none;
+}
+
+.ptable__name {
+  display: block;
+  font-weight: 600;
+}
+
+.ptable__sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-xs);
+  line-height: var(--primitives-line-heights-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Company names wrap; NPWPs, codes, emails and dates stay on one line. */
+.ptable tbody th {
+  min-width: 180px;
+}
+
+.ptable td {
+  white-space: nowrap;
+}
+
+/* Emails may wrap, but only after the @ (a <wbr> in the markup). */
+.ptable td.ptable__email {
+  white-space: normal;
+  overflow-wrap: normal;
+}
+
+.ptable__actions {
+  white-space: nowrap;
+}
+
+.ptable__actions > * + * {
+  margin-left: var(--primitives-padding-2);
+}
+
+.ptable__empty {
+  margin: 0;
+  color: var(--semantic-text-ach-color-text-secondary);
+}
