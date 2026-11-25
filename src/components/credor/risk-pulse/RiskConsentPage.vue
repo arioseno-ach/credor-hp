@@ -176,7 +176,7 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
           <div class="cp__share">
             <div>
               <h2 class="cp__h2">They will see</h2>
-              <ul class="cp__list">
+              <ul class="cp__list cp__list--shared">
                 <li>Your Company Health score and its band</li>
                 <li>The areas and indicators behind the score</li>
                 <li>A PDF copy of the report</li>
@@ -184,7 +184,7 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
             </div>
             <div>
               <h2 class="cp__h2">Stays private</h2>
-              <ul class="cp__list">
+              <ul class="cp__list cp__list--private">
                 <li>Your transactions and invoices</li>
                 <li>Your tax filings</li>
               </ul>
@@ -454,12 +454,42 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
 }
 
 .cp__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--primitives-padding-2);
   margin: var(--primitives-padding-2) 0 0;
-  list-style: disc;
-  padding-left: var(--primitives-padding-5);
+  padding: 0;
   color: var(--semantic-text-ach-color-text-secondary);
   font-size: var(--primitives-font-sizes-sm);
   line-height: var(--primitives-line-heights-sm);
+  list-style: none;
+}
+
+/* A check for what is shared, a cross for what stays private; the headings already say which is which. */
+.cp__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--primitives-padding-2);
+}
+
+.cp__list li::before {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin-top: 2px;
+  content: '';
+}
+
+.cp__list--shared li::before {
+  background: var(--semantic-text-success-ach-color-text-success);
+  mask: url('/icons/ui-actions/check.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/check.svg') center / contain no-repeat;
+}
+
+.cp__list--private li::before {
+  background: var(--semantic-text-ach-color-text-secondary);
+  mask: url('/icons/ui-actions/close.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/close.svg') center / contain no-repeat;
 }
 
 .cp__field {
