@@ -152,7 +152,6 @@ async function answerRequests() {
           v-if="tab === 'portfolio'"
           ref="portfolio"
           :partners="partners"
-          variant="table"
           id-prefix="rp-portfolio"
         />
         <RiskConsentRequests v-else-if="tab === 'requests'" />

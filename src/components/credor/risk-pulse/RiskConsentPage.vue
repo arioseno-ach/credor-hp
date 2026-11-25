@@ -196,8 +196,8 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
               v-if="!ready"
               id="consent-setup-alert"
               status="warning"
-              title-text="Finish your Achilles setup first"
-              :description-text="partner.onAchilles ? 'Your account has no auth key yet. Set one up in Achilles settings, then open this link again.' : 'Your company is not on Achilles yet. Register, set up your auth key, then open this link again.'"
+              title-text="Set up your DJP Online auth key first"
+              description-text="Approving uses the auth key from your DJP Online account. Set it up there, then open this link again."
               :has-action="false"
               :dismissible="false"
             />

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useAppView } from '@/composables/useAppView'
 import { Avatar } from '@/components/ui/avatar'
 import { credorPartners } from '@/components/credor/partners'
+import RiskPulsePartnerBanner from '@/components/credor/RiskPulsePartnerBanner.vue'
 
 /** The highest-activity partner stays first and carries the active-partner badge. */
 const VISIBLE_PARTNERS = 4
@@ -32,6 +33,8 @@ const { openApply } = useAppView()
       </div>
       <button type="button" class="partners__see-all">See All</button>
     </div>
+
+    <RiskPulsePartnerBanner />
 
     <div class="partners__list">
       <article

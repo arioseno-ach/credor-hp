@@ -8,7 +8,8 @@ import RiskIconAction from './RiskIconAction.vue'
 import RiskStatusPill, { type StatusTone } from './RiskStatusPill.vue'
 import { canConsent, formatNpwp, PARTNER_REPORT_URL, type PartnerScore } from './partner-access'
 
-defineProps<{ partners: PartnerScore[]; idPrefix: string }>()
+/** `compact` is the Company Health preview: no Last transaction column and no row count, so it fits the chapter card. */
+defineProps<{ partners: PartnerScore[]; idPrefix: string; compact?: boolean }>()
 
 const emits = defineEmits<{
   request: [id: string]
@@ -23,7 +24,7 @@ const { show } = useSnackbar()
 // The one note beside the status: when access ends, when it was sent, or why it is still waiting.
 function requestNote(partner: PartnerScore) {
   if (partner.status === 'unlocked') return `until ${partner.accessUntil}`
-  if (partner.status === 'pending') return canConsent(partner) ? `sent ${partner.requestedOn}` : 'account not set up yet'
+  if (partner.status === 'pending') return canConsent(partner) ? `sent ${partner.requestedOn}` : 'waiting for their auth key'
   return partner.requestedOn ?? ''
 }
 
@@ -52,7 +53,7 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
       <thead>
         <tr>
           <th scope="col">Company</th>
-          <th scope="col">Last transaction</th>
+          <th v-if="!compact" scope="col">Last transaction</th>
           <th scope="col">Your request</th>
           <th scope="col" class="ptable__num-head">Business risk score</th>
           <th scope="col" class="ptable__actions-head">Actions</th>
@@ -64,7 +65,7 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
             <span class="ptable__name">{{ partner.name }}</span>
             <span class="ptable__sub">{{ formatNpwp(partner.npwp) }}</span>
           </th>
-          <td>
+          <td v-if="!compact">
             <span v-if="partner.lastTransaction">{{ partner.lastTransaction }}</span>
             <span v-else class="ptable__muted">No transactions yet</span>
           </td>
@@ -78,13 +79,13 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
             </span>
           </td>
           <td class="ptable__num">
+            <!-- Band first, then the number: the word says how good, the figure says exactly. -->
             <span v-if="partner.status === 'unlocked'" class="ptable__score">
-              <span class="ptable__number">{{ partner.score.toFixed(1) }}</span>
               <RiskBandChip :score="partner.score" />
+              <span class="ptable__number">{{ partner.score.toFixed(1) }}</span>
             </span>
-            <!-- Not shared: a blurred score says one exists without showing it. Not on Achilles: no score to hint at. -->
-            <RiskBlurredScore v-else-if="partner.onAchilles" :seed="partner.id" />
-            <span v-else class="ptable__muted">No score yet</span>
+            <!-- Not shared: a blurred score says one exists without showing it. Every company has one, Achilles account or not. -->
+            <RiskBlurredScore v-else :seed="partner.npwp" />
           </td>
           <td class="ptable__actions">
             <!-- Before a request: one labelled action. After it: icon actions with tooltips, starting at the same edge. -->
@@ -140,7 +141,7 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
         </tr>
       </tbody>
     </table>
-    <div v-if="partners.length" class="ptable__footer">
+    <div v-if="partners.length && !compact" class="ptable__footer">
       <span>1-{{ partners.length }} of {{ partners.length }} {{ partners.length === 1 ? 'result' : 'results' }}</span>
     </div>
   </div>
