@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { consentLink } from '@/composables/useAppView'
 import { useSnackbar } from '@/composables/useSnackbar'
 import RiskBandChip from './RiskBandChip.vue'
-import RiskConsentCode from './RiskConsentCode.vue'
+import RiskBlurredScore from './RiskBlurredScore.vue'
 import RiskIconAction from './RiskIconAction.vue'
 import RiskStatusPill, { type StatusTone } from './RiskStatusPill.vue'
 import { canConsent, formatNpwp, PARTNER_REPORT_URL, type PartnerScore } from './partner-access'
@@ -19,6 +19,13 @@ const emits = defineEmits<{
 }>()
 
 const { show } = useSnackbar()
+
+// The one note beside the status: when access ends, when it was sent, or why it is still waiting.
+function requestNote(partner: PartnerScore) {
+  if (partner.status === 'unlocked') return `until ${partner.accessUntil}`
+  if (partner.status === 'pending') return canConsent(partner) ? `sent ${partner.requestedOn}` : 'account not set up yet'
+  return partner.requestedOn ?? ''
+}
 
 // For sending the consent link another way, such as WhatsApp.
 async function copyLink(partner: PartnerScore) {
@@ -46,8 +53,8 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
         <tr>
           <th scope="col">Company</th>
           <th scope="col">Last transaction</th>
-          <th scope="col">Business risk score</th>
           <th scope="col">Your request</th>
+          <th scope="col" class="ptable__num-head">Business risk score</th>
           <th scope="col" class="ptable__actions-head">Actions</th>
         </tr>
       </thead>
@@ -57,23 +64,27 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
             <span class="ptable__name">{{ partner.name }}</span>
             <span class="ptable__sub">{{ formatNpwp(partner.npwp) }}</span>
           </th>
-          <td>{{ partner.lastTransaction || 'No transactions yet' }}</td>
           <td>
+            <span v-if="partner.lastTransaction">{{ partner.lastTransaction }}</span>
+            <span v-else class="ptable__muted">No transactions yet</span>
+          </td>
+          <td>
+            <!-- One line per row: a pill and one short note. Nothing asked yet stays quiet, so active rows stand out.
+                 The consent code lives in the email and on the consent page; the recipient is in the Resend tooltip. -->
+            <span v-if="partner.status === 'locked'" class="ptable__muted">Not requested</span>
+            <span v-else class="request">
+              <RiskStatusPill v-bind="access[partner.status]" />
+              <span class="request__note">{{ requestNote(partner) }}</span>
+            </span>
+          </td>
+          <td class="ptable__num">
             <span v-if="partner.status === 'unlocked'" class="ptable__score">
               <span class="ptable__number">{{ partner.score.toFixed(1) }}</span>
               <RiskBandChip :score="partner.score" />
             </span>
-            <span v-else class="ptable__sub">Hidden until shared</span>
-          </td>
-          <td>
-            <RiskStatusPill v-bind="access[partner.status]" />
-            <span v-if="partner.status === 'unlocked'" class="ptable__sub">Until {{ partner.accessUntil }}</span>
-            <template v-else-if="partner.status === 'pending'">
-              <span class="ptable__sub">Sent {{ partner.requestedOn }}{{ canConsent(partner) ? '' : ' · Account not set up yet' }}</span>
-              <span class="ptable__sub">To {{ partner.email }}</span>
-            </template>
-            <span v-else-if="partner.status === 'declined'" class="ptable__sub">Sent {{ partner.requestedOn }}</span>
-            <RiskConsentCode v-if="partner.consentCode && partner.status !== 'locked'" :code="partner.consentCode" class="ptable__code" />
+            <!-- Not shared: a blurred score says one exists without showing it. Not on Achilles: no score to hint at. -->
+            <RiskBlurredScore v-else-if="partner.onAchilles" :seed="partner.id" />
+            <span v-else class="ptable__muted">No score yet</span>
           </td>
           <td class="ptable__actions">
             <!-- Before a request: one labelled action. After it: icon actions with tooltips, starting at the same edge. -->
@@ -101,8 +112,8 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
                 />
                 <RiskIconAction
                   icon="/icons/communications/forward-to-inbox.svg"
-                  label="Resend email"
-                  :aria-label="`Resend request email to ${partner.name}`"
+                  :label="`Resend email to ${partner.email}`"
+                  :aria-label="`Resend request email to ${partner.name} at ${partner.email}`"
                   @click="emits('resend', partner.id)"
                 />
                 <RiskIconAction
@@ -129,6 +140,9 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
         </tr>
       </tbody>
     </table>
+    <div v-if="partners.length" class="ptable__footer">
+      <span>1-{{ partners.length }} of {{ partners.length }} {{ partners.length === 1 ? 'result' : 'results' }}</span>
+    </div>
   </div>
 </template>
 
@@ -146,6 +160,7 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
 .actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--primitives-padding-2);
 }
 
@@ -154,13 +169,35 @@ const access: Record<PartnerScore['status'], { tone: StatusTone; label: string }
   min-width: 120px;
 }
 
-.ptable__code {
-  margin-top: var(--primitives-padding-1);
+.request {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--primitives-padding-2);
+  white-space: nowrap;
+}
+
+.request__note {
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-xs);
+  line-height: var(--primitives-line-heights-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.ptable thead th.ptable__num-head,
+.ptable td.ptable__num {
+  text-align: right;
 }
 
 .ptable__score {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--primitives-padding-2);
+}
+
+.actions__main.ach-button--outlined.ach-button--color-neutral {
+  /* The Credor secondary action, as on the homepage cards: a light border on a pill. */
+  border-color: var(--component-card-border);
+  border-radius: var(--primitives-border-radius-infinite);
 }
 </style>

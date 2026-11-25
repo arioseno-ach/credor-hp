@@ -18,24 +18,41 @@ export type AppView =
   /** A partner's Company Health report, readable once they share it. */
   | { name: 'partner-report'; partnerId: string }
   | { name: 'transactions'; tabId: string }
+  /** Sales transactions list; `focusId` names a new row to land on after creating it. */
+  | { name: 'sales'; focusId?: string }
+  | { name: 'sales-create' }
   /** The public consent page a partner opens from the request email, outside the signed-in app shell. */
   | { name: 'consent'; partnerId: string }
 
 const CONSENT_HASH = /^#\/consent\/([\w-]+)$/
 
 // A shared consent link (#/consent/<partner id>) opens straight on the consent page.
-const linked = CONSENT_HASH.exec(window.location.hash)?.[1]
-const view = ref<AppView>(linked ? { name: 'consent', partnerId: linked } : { name: 'home' })
+const REPORT_HASH = /^#\/partner-report\/([\w-]+)$/
+
+// Shared links: a consent link (#/consent/<id>) or a partner report opened in a new tab (#/partner-report/<id>).
+function viewFromHash(): AppView | null {
+  const consent = CONSENT_HASH.exec(window.location.hash)?.[1]
+  if (consent) return { name: 'consent', partnerId: consent }
+  const report = REPORT_HASH.exec(window.location.hash)?.[1]
+  return report ? { name: 'partner-report', partnerId: report } : null
+}
+
+const view = ref<AppView>(viewFromHash() ?? { name: 'home' })
 
 // A consent link pasted into a tab that already has the app open only changes the hash.
 window.addEventListener('hashchange', () => {
-  const partnerId = CONSENT_HASH.exec(window.location.hash)?.[1]
-  if (partnerId) view.value = { name: 'consent', partnerId }
+  const next = viewFromHash()
+  if (next) view.value = next
 })
 
 /** The link the request email carries, also copied for WhatsApp. Prototype: the partner id stands in for a signed token. */
 export function consentLink(partnerId: string): string {
   return `${window.location.origin}${window.location.pathname}#/consent/${partnerId}`
+}
+
+/** Opens a shared partner report in a new tab, so a form in progress stays as it is. */
+export function partnerReportLink(partnerId: string): string {
+  return `${window.location.origin}${window.location.pathname}#/partner-report/${partnerId}`
 }
 
 /** Prototype-level navigation between the homepage and an application detail page. */
@@ -80,8 +97,21 @@ export function useAppView() {
 
   function openPartners() {
     // Leaving a consent page opened from a link drops the link, so a reload lands in the app.
-    if (CONSENT_HASH.test(window.location.hash)) history.replaceState(null, '', window.location.pathname)
+    if (CONSENT_HASH.test(window.location.hash) || REPORT_HASH.test(window.location.hash)) history.replaceState(null, '', window.location.pathname)
     view.value = { name: 'partners' }
+    focusHeading()
+  }
+
+  async function openSales(focusId?: string) {
+    view.value = { name: 'sales', focusId }
+    if (!focusId) return focusHeading()
+    window.scrollTo({ top: 0 })
+    await nextTick()
+    document.getElementById(focusId)?.focus()
+  }
+
+  function openSalesCreate() {
+    view.value = { name: 'sales-create' }
     focusHeading()
   }
 
@@ -116,5 +146,5 @@ export function useAppView() {
     heading?.focus({ preventScroll: true })
   }
 
-  return { view, openApply, openApplication, openRiskPulse, openPartners, openPartnerReport, openConsentPage, openTransactions, goHome }
+  return { view, openApply, openApplication, openRiskPulse, openPartners, openPartnerReport, openConsentPage, openSales, openSalesCreate, openTransactions, goHome }
 }

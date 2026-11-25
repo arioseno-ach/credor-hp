@@ -46,8 +46,8 @@ const errors = computed(() => {
       : digits !== own && `0${digits}` !== own
         ? `This NPWP does not match ${partner.value.name}, the company this request was sent to.`
         : '',
-    passphrase: passphrase.value ? '' : 'Enter your Achilles passphrase.',
-    authKey: authKey.value.trim() ? '' : 'Enter the auth key from your Achilles settings.',
+    passphrase: passphrase.value ? '' : 'Enter your DJP Online passphrase.',
+    authKey: authKey.value.trim() ? '' : 'Enter the auth key from your DJP Online account.',
     agreed: agreed.value ? '' : 'Tick the agreement to approve.',
   }
 })
@@ -157,7 +157,6 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
       <template v-else>
         <section class="cp__card" aria-labelledby="consent-title">
           <RiskConsentIllustration :owner="partner.name" :requester="verifiedCompany.name" />
-          <p class="cp__eyebrow">Sent to {{ partner.name }} · {{ partner.email }}</p>
           <h1 id="consent-title" ref="heading" class="cp__title" tabindex="-1">
             {{ verifiedCompany.name }} asks to see your Company Health report
           </h1>
@@ -228,7 +227,7 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
             <form class="cp-verify" novalidate @submit.prevent="approve">
               <DialogTitle class="cp__title cp-verify__title">Confirm it is your company</DialogTitle>
               <DialogDescription class="cp__text">
-                No sign-in needed. Use the NPWP, passphrase and auth key of your Achilles account.
+                No sign-in needed. Verify your company with your NPWP, passphrase, and auth key from DJP Online.
               </DialogDescription>
 
               <div class="cp__field">
@@ -269,7 +268,9 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
                   :aria-describedby="errors.authKey ? 'consent-authKey-error' : 'consent-authKey-hint'"
                 />
                 <p v-if="errors.authKey" id="consent-authKey-error" class="cp__error">{{ errors.authKey }}</p>
-                <p v-else id="consent-authKey-hint" class="cp__hint">Find it in Achilles under Settings, Security.</p>
+                <p v-else id="consent-authKey-hint" class="cp__hint">
+                  You can check your passphrase and auth key in your DJP Online account.
+                </p>
               </div>
 
               <div class="cp__field">
@@ -327,9 +328,9 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
 <style scoped>
 .cp {
   min-height: 100vh;
-  /* A soft tint at the top that fades into the canvas, so the page feels less flat than a plain grey. */
+  /* A soft tint at the bottom that fades upward into the canvas, so the page feels less flat than a plain grey. */
   background: linear-gradient(
-      180deg,
+      0deg,
       var(--semantic-bg-ach-color-bg-illustration-tint) 0,
       var(--semantic-bg-ach-color-bg-canvas) 480px
     )
@@ -374,7 +375,6 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
   flex-direction: column;
   gap: var(--primitives-padding-4);
   padding: var(--primitives-padding-6);
-  border: var(--primitives-border-width-default) solid var(--component-card-border);
   border-radius: var(--primitives-border-radius-lg);
   background: var(--component-card-background);
 }
@@ -388,7 +388,6 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
   height: 32px;
 }
 
-.cp__eyebrow,
 .cp__note,
 .cp__hint {
   margin: 0;

@@ -4,17 +4,18 @@ export type StatusTone = 'warning' | 'success' | 'error' | 'neutral'
 defineProps<{ tone: StatusTone; label: string }>()
 
 // One icon per tone; the label always carries the meaning, the icon only reinforces it.
-const icons: Record<StatusTone, string> = {
+// Neutral has none: a lock read as "blocked" for states like "Not requested", which only mean nothing happened yet.
+const icons: Record<StatusTone, string | null> = {
   warning: '/icons/common-actions/schedule.svg',
   success: '/icons/ui-actions/check-circle.svg',
   error: '/icons/ui-actions/cancel.svg',
-  neutral: '/icons/common-actions/lock.svg',
+  neutral: null,
 }
 </script>
 
 <template>
-  <span class="pill" :data-tone="tone" :style="{ '--pill-icon': `url('${icons[tone]}')` }">
-    <span class="pill__icon" aria-hidden="true"></span>{{ label }}
+  <span class="pill" :data-tone="tone" :style="icons[tone] ? { '--pill-icon': `url('${icons[tone]}')` } : undefined">
+    <span v-if="icons[tone]" class="pill__icon" aria-hidden="true"></span>{{ label }}
   </span>
 </template>
 
