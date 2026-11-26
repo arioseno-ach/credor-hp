@@ -2,7 +2,9 @@
 import { computed } from 'vue'
 import { Button } from '@/components/ui/button'
 import RiskBandChip from '@/components/credor/risk-pulse/RiskBandChip.vue'
+import RiskBlurredScore from '@/components/credor/risk-pulse/RiskBlurredScore.vue'
 import { useAppView } from '@/composables/useAppView'
+import { usePartnerPulse } from '@/composables/usePartnerPulse'
 import { useCompanyHealthDialog } from '@/composables/useCompanyHealthDialog'
 import type { HealthVariant } from '@/lib/prototype/types'
 import {
@@ -16,7 +18,8 @@ import {
 } from '@/lib/risk-pulse'
 
 const { open: openCompanyHealthDialog } = useCompanyHealthDialog()
-const { openRiskPulse } = useAppView()
+const { openRiskPulse, openPartners } = useAppView()
+const { partners, shared, slide } = usePartnerPulse()
 
 /** Prototype report built from the same Risk Pulse preview as the details page (1–5 scale). */
 const reportUrl = `${import.meta.env.BASE_URL}reports/risk-pulse-report-demo.html`
@@ -155,6 +158,28 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
         </template>
       </Button>
     </div>
+
+    <!-- Partners as the card's last row, one partner at a time. -->
+    <button type="button" class="risk-card__partners" @click="openPartners()">
+      <span class="risk-card__partners-text">
+        <span class="risk-card__partners-title">
+          Partner scores <span class="risk-card__partners-meta">{{ shared.length }} of {{ partners.length }} shared</span>
+        </span>
+        <span class="risk-card__partners-slot" aria-hidden="true">
+          <Transition name="risk-slide" mode="out-in">
+            <span v-if="slide" :key="slide.id" class="risk-card__slide">
+              <span class="risk-card__avatar">{{ slide.initials }}</span>
+              <template v-if="slide.status === 'unlocked'">
+                <RiskBandChip :score="slide.score" />
+                <span class="risk-card__partner-score">{{ slide.score.toFixed(1) }}</span>
+              </template>
+              <RiskBlurredScore v-else :seed="slide.npwp" />
+            </span>
+          </Transition>
+        </span>
+      </span>
+      <span class="risk-card__chevron" aria-hidden="true"></span>
+    </button>
   </section>
 </template>
 
@@ -174,7 +199,8 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   text-align: center;
 }
 
-.risk-card--synced {
+/* The partner row closes every state, full width, so the bottom padding goes. */
+.risk-card {
   padding-bottom: 0;
 }
 
@@ -435,6 +461,129 @@ const segmentColors = computed(() => (isSynced.value ? strongSegmentColors : mut
   width: 100%;
   border-color: var(--component-card-border);
   border-radius: var(--primitives-border-radius-infinite);
+}
+
+/* Partner row: tinted so it reads as an invitation. Flush under the actions row once synced; spaced below the copy or CTA before that. */
+.risk-card__partners {
+  display: flex;
+  width: calc(100% + var(--primitives-padding-4) + var(--primitives-padding-4));
+  align-items: center;
+  gap: var(--primitives-padding-2);
+  margin: var(--primitives-padding-1) calc(-1 * var(--primitives-padding-4)) 0;
+  padding: var(--primitives-padding-3) var(--primitives-padding-4);
+  border: 0;
+  border-top: var(--primitives-border-width-default) solid var(--component-card-border);
+  border-radius: 0 0 var(--primitives-border-radius-lg) var(--primitives-border-radius-lg);
+  background: color-mix(in srgb, var(--semantic-bg-ach-color-bg-illustration-tint) 45%, var(--component-card-background));
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.risk-card--synced .risk-card__partners {
+  margin-top: calc(-1 * var(--primitives-padding-3));
+}
+
+.risk-card__partners:hover {
+  background: color-mix(in srgb, var(--semantic-bg-ach-color-bg-illustration-tint) 80%, var(--component-card-background));
+}
+
+.risk-card__partners:focus-visible {
+  outline: var(--primitives-border-width-2) solid var(--semantic-text-ach-color-text-link);
+  outline-offset: calc(-1 * var(--primitives-border-width-2));
+}
+
+.risk-card__partners-text {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--primitives-padding-1);
+}
+
+.risk-card__partners-title {
+  font-size: var(--primitives-font-sizes-xs);
+  font-weight: 600;
+  line-height: var(--primitives-line-heights-2xs);
+}
+
+.risk-card__partners-meta {
+  margin-left: var(--primitives-padding-1);
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-weight: 400;
+}
+
+.risk-card__partners-slot {
+  display: flex;
+  height: 24px;
+  align-items: center;
+}
+
+.risk-card__slide {
+  display: flex;
+  align-items: center;
+  gap: var(--primitives-padding-2);
+}
+
+.risk-card__avatar {
+  display: grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  place-items: center;
+  border-radius: var(--primitives-border-radius-infinite);
+  background: var(--semantic-bg-ach-color-bg-inverse);
+  color: var(--semantic-text-ach-color-text-inverse);
+  font-size: var(--primitives-font-sizes-2xs);
+  font-weight: 600;
+}
+
+.risk-card__partner-score {
+  font-family: var(--primitives-font-families-display), sans-serif;
+  font-size: var(--primitives-font-sizes-sm);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-card__chevron {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  background: var(--semantic-text-ach-color-text-secondary);
+  mask: url('/icons/ui-actions/chevron-right.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/chevron-right.svg') center / contain no-repeat;
+  transition: transform var(--semantic-motion-duration-fast);
+}
+
+.risk-card__partners:hover .risk-card__chevron {
+  transform: translateX(2px);
+}
+
+/* Each partner slides up and out, the next one in. */
+.risk-slide-enter-active,
+.risk-slide-leave-active {
+  transition:
+    opacity var(--semantic-motion-duration-base) var(--semantic-motion-easing-emphasized),
+    transform var(--semantic-motion-duration-base) var(--semantic-motion-easing-emphasized);
+}
+
+.risk-slide-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.risk-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .risk-card__chevron,
+  .risk-slide-enter-active,
+  .risk-slide-leave-active {
+    transition: none;
+  }
 }
 
 .risk-card__cta-arrow {

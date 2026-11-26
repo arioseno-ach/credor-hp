@@ -94,7 +94,10 @@ async function answerRequests() {
         Back to Company Health
       </button>
       <div class="pp__title-row">
-        <h1 class="pp__title">Partners</h1>
+        <div>
+          <h1 class="pp__title">Partners</h1>
+          <p class="pp__subtitle">Lower the risk of your next transaction by knowing your partners' RiskPulse score first.</p>
+        </div>
         <Button
           variant="outline"
           color="neutral"
@@ -243,6 +246,13 @@ async function answerRequests() {
 
 .pp__title:focus {
   outline: none;
+}
+
+.pp__subtitle {
+  margin: var(--primitives-padding-1) 0 0;
+  color: var(--semantic-text-ach-color-text-secondary);
+  font-size: var(--primitives-font-sizes-sm);
+  line-height: var(--primitives-line-heights-sm);
 }
 
 .pp__toolbar {

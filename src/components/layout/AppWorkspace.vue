@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { SidebarInset, useSidebar } from '@/components/ui/sidebar'
 import Sidebar from '@/components/layout/Sidebar.vue'
+import LenderSidebar from '@/components/lender/LenderSidebar.vue'
 import TopBar from '@/components/layout/TopBar.vue'
 import CredorOverviewHeader from '@/components/credor/CredorOverviewHeader.vue'
 import CredorFinancingBanner from '@/components/credor/CredorFinancingBanner.vue'
@@ -21,13 +22,18 @@ import CredorRiskPulsePage from '@/components/credor/risk-pulse/CredorRiskPulseP
 import RiskPartnersPage from '@/components/credor/risk-pulse/RiskPartnersPage.vue'
 import SalesTransactionsPage from '@/components/sales/SalesTransactionsPage.vue'
 import SalesCreatePage from '@/components/sales/SalesCreatePage.vue'
+import LenderLeadsPage from '@/components/lender/LenderLeadsPage.vue'
+import LenderLeadDetailPage from '@/components/lender/LenderLeadDetailPage.vue'
+import LenderContractPage from '@/components/lender/LenderContractPage.vue'
+import LenderLoansPage from '@/components/lender/LenderLoansPage.vue'
+import LenderSettingsPage from '@/components/lender/LenderSettingsPage.vue'
 import { useAppView } from '@/composables/useAppView'
 import ScenarioSwitcher from '@/components/prototype/ScenarioSwitcher.vue'
 import CredorFinancingSidebar from '@/components/credor/CredorFinancingSidebar.vue'
 import { usePrototypeState } from '@/lib/prototype/usePrototypeState'
 
 const { isMobile, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
-const { view, openSales, goHome } = useAppView()
+const { view, activePortal, openSales, goHome } = useAppView()
 const mobileNavOpen = computed(() => isMobile.value && openMobile.value)
 
 const { state, bannerVariant, showAlert, showPartners, showTransactions, showLoanSimulationInMain } =
@@ -35,6 +41,7 @@ const { state, bannerVariant, showAlert, showPartners, showTransactions, showLoa
 
 function closeMobileNav(label?: string) {
   if (isMobile.value) setOpenMobile(false)
+  if (activePortal.value !== 'achilles') return
   // Prototype: only these sidebar items have pages.
   if (label === 'Sales Transaction') openSales()
   else if (label === 'Home' || label === 'Cash & Financing') goHome()
@@ -43,11 +50,45 @@ function closeMobileNav(label?: string) {
 
 <template>
   <div class="app-shell">
-    <Sidebar @select="closeMobileNav" />
+    <LenderSidebar v-if="activePortal === 'lender'" @select="closeMobileNav" />
+    <Sidebar v-else @select="closeMobileNav" />
     <SidebarInset class="app-workspace">
-      <ScenarioSwitcher />
+      <ScenarioSwitcher v-if="activePortal === 'achilles'" />
       <TopBar :menu-expanded="mobileNavOpen" @menu-click="toggleSidebar" />
-      <main v-if="view.name === 'apply'" class="app-content">
+      <main v-if="view.name === 'lender-leads'" class="app-content">
+        <LenderLeadsPage />
+      </main>
+      <main v-else-if="view.name === 'lender-lead-detail'" class="app-content">
+        <LenderLeadDetailPage
+          :key="`lead-${view.id}`"
+          :id="view.id"
+          source="leads"
+          :initial-tab="view.tab"
+        />
+      </main>
+      <main v-else-if="view.name === 'lender-loan-detail'" class="app-content">
+        <LenderLeadDetailPage
+          :key="`loan-${view.id}`"
+          :id="view.id"
+          source="loans"
+          :initial-tab="view.tab"
+        />
+      </main>
+      <main v-else-if="view.name === 'lender-contract'" class="app-content">
+        <LenderContractPage
+          :key="`contract-${view.id}-${view.contractId}`"
+          :id="view.id"
+          :contract-id="view.contractId"
+          :from="view.from"
+        />
+      </main>
+      <main v-else-if="view.name === 'lender-loans'" class="app-content">
+        <LenderLoansPage />
+      </main>
+      <main v-else-if="view.name === 'lender-settings'" class="app-content">
+        <LenderSettingsPage />
+      </main>
+      <main v-else-if="view.name === 'apply'" class="app-content">
         <CredorFinancingApply :key="JSON.stringify(view.entry)" :entry="view.entry" />
       </main>
       <main v-else-if="view.name === 'application'" class="app-content">
@@ -92,9 +133,11 @@ function closeMobileNav(label?: string) {
       </main>
     </SidebarInset>
 
-    <LoanCalculatorDialog />
-    <CompanyHealthDialog />
-    <PersonalisationDrawer />
+    <template v-if="activePortal === 'achilles'">
+      <LoanCalculatorDialog />
+      <CompanyHealthDialog />
+      <PersonalisationDrawer />
+    </template>
   </div>
 </template>
 

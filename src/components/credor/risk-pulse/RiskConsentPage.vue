@@ -10,6 +10,7 @@ import { useAppView } from '@/composables/useAppView'
 import { usePartnerAccess } from '@/composables/usePartnerAccess'
 import { useSnackbar } from '@/composables/useSnackbar'
 import RiskConsentIllustration from './RiskConsentIllustration.vue'
+import RiskTrustCard from './RiskTrustCard.vue'
 import { ACCESS_DAYS, accessUntil, canConsent, formatNpwp, npwpDigits } from './partner-access'
 
 const props = defineProps<{ partnerId: string }>()
@@ -21,8 +22,8 @@ const { show } = useSnackbar()
 const partner = computed(() => partners.value.find((item) => item.id === props.partnerId))
 const ready = computed(() => !!partner.value && canConsent(partner.value))
 
-// form → (reject →) a final screen. A request already answered opens on its final screen.
-type Step = 'form' | 'reject' | 'approved' | 'rejected'
+// form → a final screen; each answer is confirmed in its own dialog. A request already answered opens on its final screen.
+type Step = 'form' | 'approved' | 'rejected'
 const step = ref<Step>(
   partner.value?.status === 'unlocked' ? 'approved' : partner.value?.status === 'declined' ? 'rejected' : 'form',
 )
@@ -75,12 +76,6 @@ function afterVerify(event: Event) {
   })
 }
 
-async function settle(next: Step) {
-  step.value = next
-  await nextTick()
-  heading.value?.focus()
-}
-
 async function approve() {
   if (working.value) return
   submitted.value = true
@@ -103,15 +98,21 @@ async function approve() {
   verifyOpen.value = false
 }
 
-async function startReject() {
-  step.value = 'reject'
-  await nextTick()
-  document.getElementById('consent-reason')?.focus()
-}
+const rejectOpen = ref(false)
 
 function confirmReject() {
   answerFromLink(props.partnerId, false)
-  settle('rejected')
+  step.value = 'rejected'
+  rejectOpen.value = false
+}
+
+// Same focus hand-off as approving: the result heading after rejecting, Reject again after cancelling.
+function afterReject(event: Event) {
+  event.preventDefault()
+  requestAnimationFrame(() => {
+    if (step.value === 'rejected') heading.value?.focus()
+    else document.getElementById('consent-reject')?.focus()
+  })
 }
 
 // Prototype: back to the requester's side, where their notification would arrive.
@@ -139,7 +140,7 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
       </div>
 
       <div v-else-if="step === 'approved'" class="cp__card cp__card--result">
-        <img src="/icons/ui-actions/check-circle.svg" alt="" aria-hidden="true" class="cp__result-icon">
+        <RiskConsentIllustration state="approved" :owner="partner.name" :requester="verifiedCompany.name" />
         <h1 ref="heading" class="cp__title" tabindex="-1">You approved the request</h1>
         <p class="cp__text">
           {{ verifiedCompany.name }} can see your Company Health report until {{ partner.accessUntil ?? accessUntil(new Date()) }}.
@@ -148,6 +149,7 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
       </div>
 
       <div v-else-if="step === 'rejected'" class="cp__card cp__card--result">
+        <RiskConsentIllustration state="rejected" :owner="partner.name" :requester="verifiedCompany.name" />
         <h1 ref="heading" class="cp__title" tabindex="-1">You rejected the request</h1>
         <p class="cp__text">
           {{ verifiedCompany.name }} will not see your Company Health report. We let them know<template v-if="reason">, with your reason</template>.
@@ -203,7 +205,7 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
             />
             <!-- The decision is the only thing to do here; identity is checked once the user chooses to approve. -->
             <footer class="cp__actions cp__actions--decision">
-              <Button variant="outline" color="neutral" type="button" @click="startReject">Reject</Button>
+              <Button id="consent-reject" variant="outline" color="neutral" type="button" @click="rejectOpen = true">Reject</Button>
               <Button
                 id="consent-approve"
                 type="button"
@@ -216,6 +218,8 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
             </footer>
           </template>
         </section>
+
+        <RiskTrustCard />
 
         <Dialog v-model:open="verifyOpen">
           <DialogContent
@@ -292,18 +296,25 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
           </DialogContent>
         </Dialog>
 
-        <section v-if="step === 'reject'" class="cp__card" aria-labelledby="consent-reject-title">
-          <h2 id="consent-reject-title" class="cp__h2">Reject this request</h2>
-          <div class="cp__field">
-            <label for="consent-reason" class="cp__label">Reason (optional)</label>
-            <textarea id="consent-reason" v-model="reason" class="cp__textarea" rows="3" maxlength="300"></textarea>
-            <p class="cp__hint">We pass this on to {{ verifiedCompany.name }}.</p>
-          </div>
-          <footer class="cp__actions">
-            <Button variant="outline" color="neutral" type="button" @click="step = 'form'">Back</Button>
-            <Button variant="destructive" type="button" @click="confirmReject">Reject request</Button>
-          </footer>
-        </section>
+        <Dialog v-model:open="rejectOpen">
+          <DialogContent :show-close="false" @close-auto-focus="afterReject">
+            <form class="cp-verify" @submit.prevent="confirmReject">
+              <DialogTitle class="cp__title cp-verify__title">Reject this request?</DialogTitle>
+              <DialogDescription class="cp__text">
+                {{ verifiedCompany.name }} will not see your Company Health report. They can send a new request later.
+              </DialogDescription>
+              <div class="cp__field">
+                <label for="consent-reason" class="cp__label">Reason (optional)</label>
+                <textarea id="consent-reason" v-model="reason" class="cp__textarea" rows="3" maxlength="300"></textarea>
+                <p class="cp__hint">We pass this on to {{ verifiedCompany.name }}.</p>
+              </div>
+              <footer class="cp__actions">
+                <Button variant="outline" color="neutral" type="button" @click="rejectOpen = false">Cancel</Button>
+                <Button variant="destructive" type="submit">Reject request</Button>
+              </footer>
+            </form>
+          </DialogContent>
+        </Dialog>
       </template>
     </main>
 
@@ -328,14 +339,14 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
 <style scoped>
 .cp {
   min-height: 100vh;
-  /* A soft tint at the bottom that fades upward into the canvas, so the page feels less flat than a plain grey. */
+  /* A soft tint at the bottom that fades upward into pure white. */
   background: linear-gradient(
       0deg,
       var(--semantic-bg-ach-color-bg-illustration-tint) 0,
-      var(--semantic-bg-ach-color-bg-canvas) 480px
+      var(--semantic-bg-ach-color-bg-surface) 480px
     )
     no-repeat,
-    var(--semantic-bg-ach-color-bg-canvas);
+    var(--semantic-bg-ach-color-bg-surface);
   color: var(--semantic-text-ach-color-text-default);
   font-family: var(--primitives-font-families-body), sans-serif;
 }
@@ -345,7 +356,6 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
   align-items: center;
   gap: var(--primitives-padding-3);
   padding: var(--primitives-padding-4) var(--primitives-padding-6);
-  border-bottom: var(--primitives-border-width-default) solid var(--semantic-border-ach-color-border-subtle);
   background: var(--semantic-bg-ach-color-bg-surface);
 }
 
@@ -383,10 +393,6 @@ onMounted(() => heading.value?.focus({ preventScroll: true }))
   align-items: flex-start;
 }
 
-.cp__result-icon {
-  width: 32px;
-  height: 32px;
-}
 
 .cp__note,
 .cp__hint {
