@@ -1,31 +1,48 @@
 <script setup lang="ts">
 import { bandStrong } from './shared'
 
-// Your company document on the left, animated sharing progress in the middle, requesting company on the right.
-defineProps<{ owner: string; requester: string }>()
+// Your company document on the left, the requesting company on the right, and what passes between them in the middle:
+// a live stream while the request waits, a settled trail once approved, a trail that stops short once rejected.
+const props = withDefaults(defineProps<{ owner: string; requester: string; state?: 'request' | 'approved' | 'rejected' }>(), {
+  state: 'request',
+})
+
+const requesterLabel = { request: 'Requesting access', approved: 'Has access', rejected: 'No access' }
+
+// The settled trail: evenly spaced dots, pale at the document and full brand blue at the requester.
+const TRAIL_COUNT = 18
+const trail = Array.from({ length: TRAIL_COUNT }, (_, index) => {
+  const ratio = index / (TRAIL_COUNT - 1)
+  return {
+    index,
+    approved: (0.25 + ratio * 0.75).toFixed(2),
+    // Rejected: the data never leaves the left half.
+    rejected: ratio < 0.4 ? (0.5 - ratio).toFixed(2) : '0',
+  }
+})
 
 // Compact band bars on the document sheet so it reads as a Company Health report at a glance.
 const bars = [0.45, 0.65, 0.85, 1, 0.78]
 
-// 16 paired dots (32 total) that physically travel left to right while spiraling 180deg apart like a DNA double helix.
-const HELIX_COUNT = 16
-const HELIX_DURATION = 2.6
-const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
-  const ratio = index / HELIX_COUNT
-  const travelOffset = ratio * HELIX_DURATION
-  // Using 1.5x offset on the same period makes both the individual dots and the helix twist flow left to right seamlessly.
-  const helixOffset = travelOffset * 1.5
-  const staticRatio = index / (HELIX_COUNT - 1)
-  const staticAngle = staticRatio * Math.PI * 3
+// Small particles drifting left to right, spread at the document and gathering toward the requester, like data in transit.
+// A fixed seed keeps the field identical on every render.
+const PARTICLE_COUNT = 40
+let seed = 7
+const random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646
+
+const particles = Array.from({ length: PARTICLE_COUNT }, (_, index) => {
+  const duration = 3 + random() * 1.8
+  const spread = (random() * 2 - 1) * 12
   return {
     index,
-    travelDelay: `${(-HELIX_DURATION + travelOffset).toFixed(3)}s`,
-    helixDelayA: `${(-HELIX_DURATION * 2 + helixOffset).toFixed(3)}s`,
-    helixDelayB: `${(-HELIX_DURATION * 2.5 + helixOffset).toFixed(3)}s`,
-    staticX: `${(staticRatio * 100).toFixed(1)}%`,
-    staticOpacity: (0.2 + staticRatio * 0.8).toFixed(2),
-    staticYA: `${(-Math.sin(staticAngle) * 9).toFixed(1)}px`,
-    staticYB: `${(Math.sin(staticAngle) * 9).toFixed(1)}px`,
+    size: `${(2 + random() * 2).toFixed(1)}px`,
+    duration: `${duration.toFixed(2)}s`,
+    // Negative delays start every particle mid-flight, so the stream is full from the first frame.
+    delay: `${(-random() * duration).toFixed(2)}s`,
+    yStart: `${spread.toFixed(1)}px`,
+    yEnd: `${(spread * 0.25).toFixed(1)}px`,
+    staticX: `${((index / (PARTICLE_COUNT - 1)) * 100).toFixed(1)}%`,
+    staticOpacity: (0.15 + (index / (PARTICLE_COUNT - 1)) * 0.7).toFixed(2),
   }
 })
 </script>
@@ -68,32 +85,38 @@ const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
     </div>
 
     <div class="ci__transfer">
-      <div class="ci__helix-track">
+      <div v-if="props.state !== 'request'" class="ci__trail">
         <span
-          v-for="packet in helixPackets"
-          :key="packet.index"
-          class="ci__packet"
-          :style="{
-            '--travel-delay': packet.travelDelay,
-            '--static-x': packet.staticX,
-            '--static-opacity': packet.staticOpacity,
-          }"
-        >
-          <span
-            class="ci__helix-dot"
-            :style="{ '--dot-delay': packet.helixDelayA, '--static-y': packet.staticYA }"
-          ></span>
-          <span
-            class="ci__helix-dot"
-            :style="{ '--dot-delay': packet.helixDelayB, '--static-y': packet.staticYB }"
-          ></span>
+          v-for="dot in trail"
+          :key="dot.index"
+          class="ci__trail-dot"
+          :style="{ opacity: props.state === 'approved' ? dot.approved : dot.rejected }"
+        ></span>
+        <span class="ci__badge" :class="`ci__badge--${props.state}`">
+          <span class="ci__icon" :class="props.state === 'approved' ? 'ci__icon--check' : 'ci__icon--close'"></span>
         </span>
+      </div>
+      <div v-else class="ci__stream">
+        <span
+          v-for="particle in particles"
+          :key="particle.index"
+          class="ci__particle"
+          :style="{
+            '--size': particle.size,
+            '--duration': particle.duration,
+            '--delay': particle.delay,
+            '--y-start': particle.yStart,
+            '--y-end': particle.yEnd,
+            '--static-x': particle.staticX,
+            '--static-opacity': particle.staticOpacity,
+          }"
+        ></span>
       </div>
     </div>
 
     <div class="ci__node">
       <div class="ci__stage">
-        <div class="ci__company-tile">
+        <div class="ci__company-tile" :class="{ 'ci__company-tile--muted': props.state === 'rejected' }">
           <span class="ci__company-inner">
             <span class="ci__icon ci__icon--company"></span>
           </span>
@@ -101,7 +124,7 @@ const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
       </div>
       <div class="ci__meta">
         <p class="ci__name">{{ requester }}</p>
-        <p class="ci__label">Requesting access</p>
+        <p class="ci__label">{{ requesterLabel[props.state] }}</p>
       </div>
     </div>
   </div>
@@ -109,8 +132,11 @@ const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
 
 <style scoped>
 .ci {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(88px, 148px) minmax(0, 1fr);
+  box-sizing: border-box;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   gap: var(--primitives-padding-3);
   padding: var(--primitives-padding-3) var(--primitives-padding-2) var(--primitives-padding-2);
@@ -227,42 +253,96 @@ const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
   border-radius: 2px;
 }
 
+.ci__node {
+  position: relative;
+  z-index: 1;
+}
+
+/* Spans from just past the document to just before the company tile: the visuals sit at the column centres. */
 .ci__transfer {
+  position: absolute;
+  top: var(--primitives-padding-3);
+  right: calc(25% + 32px);
+  left: calc(25% + 32px);
   display: flex;
-  width: 100%;
   height: 82px;
   align-items: center;
 }
 
-.ci__helix-track {
+.ci__trail {
   position: relative;
+  display: flex;
   width: 100%;
-  height: 28px;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.ci__packet {
-  position: absolute;
-  top: 0;
-  left: 0;
-  display: grid;
-  width: 4px;
-  height: 28px;
-  margin-left: -2px;
-  place-items: center;
-  will-change: left, opacity;
-  animation: ci-travel 2.6s linear infinite;
-  animation-delay: var(--travel-delay);
-}
-
-.ci__helix-dot {
-  position: absolute;
-  width: 4px;
-  height: 4px;
+.ci__trail-dot {
+  width: 3px;
+  height: 3px;
   border-radius: var(--primitives-border-radius-infinite);
   background: var(--semantic-brand-ach-color-brand-default);
-  will-change: transform, opacity;
-  animation: ci-helix 2.6s linear infinite;
-  animation-delay: var(--dot-delay);
+}
+
+.ci__badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 3px solid var(--component-card-background);
+  border-radius: var(--primitives-border-radius-infinite);
+  transform: translate(-50%, -50%);
+}
+
+.ci__badge--approved {
+  background: var(--semantic-bg-success-ach-color-bg-success-surface);
+  color: var(--semantic-icon-success-ach-color-icon-success);
+}
+
+.ci__badge--rejected {
+  background: var(--semantic-bg-error-ach-color-bg-error-surface);
+  color: var(--semantic-icon-error-ach-color-icon-error);
+}
+
+/* The badge lands once, as the answer arrives. */
+@media (prefers-reduced-motion: no-preference) {
+  .ci__badge {
+    animation: ci-badge-in var(--semantic-motion-duration-slow) var(--semantic-motion-easing-emphasized) both;
+  }
+}
+
+@keyframes ci-badge-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+}
+
+.ci__company-tile--muted {
+  opacity: 0.5;
+}
+
+.ci__stream {
+  position: relative;
+  width: 100%;
+  height: 32px;
+}
+
+.ci__particle {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: var(--size);
+  height: var(--size);
+  margin: calc(var(--size) / -2) 0 0 calc(var(--size) / -2);
+  border-radius: var(--primitives-border-radius-infinite);
+  opacity: 0;
+  will-change: left, transform, opacity;
+  animation: ci-drift var(--duration) linear infinite;
+  animation-delay: var(--delay);
 }
 
 .ci__company-tile {
@@ -328,6 +408,19 @@ const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
   -webkit-mask: url('/icons/text-formatting/description.svg') center / contain no-repeat;
 }
 
+.ci__icon--check,
+.ci__icon--close {
+  width: 14px;
+  height: 14px;
+  mask: url('/icons/ui-actions/check.svg') center / contain no-repeat;
+  -webkit-mask: url('/icons/ui-actions/check.svg') center / contain no-repeat;
+}
+
+.ci__icon--close {
+  mask-image: url('/icons/ui-actions/close.svg');
+  -webkit-mask-image: url('/icons/ui-actions/close.svg');
+}
+
 .ci__icon--company {
   width: 26px;
   height: 26px;
@@ -335,98 +428,39 @@ const helixPackets = Array.from({ length: HELIX_COUNT }, (_, index) => {
   -webkit-mask: url('/icons/business-payments/domain.svg') center / contain no-repeat;
 }
 
-@keyframes ci-travel {
+/* Faint and pale where it leaves the document, full brand blue as it reaches the requester. */
+@keyframes ci-drift {
   0% {
     left: 0%;
+    background: var(--semantic-brand-ach-color-brand-secondary);
     opacity: 0;
+    transform: translateY(var(--y-start));
   }
-  12% {
-    opacity: 0.24;
+  15% {
+    opacity: 0.35;
   }
-  45% {
-    opacity: 0.62;
+  55% {
+    opacity: 0.6;
   }
-  82% {
+  85% {
+    background: var(--semantic-brand-ach-color-brand-default);
     opacity: 1;
-  }
-  92% {
-    opacity: 0.85;
   }
   100% {
     left: 100%;
+    background: var(--semantic-brand-ach-color-brand-default);
     opacity: 0;
-  }
-}
-
-@keyframes ci-helix {
-  0% {
-    z-index: 2;
-    background: var(--semantic-brand-ach-color-brand-default);
-    opacity: 1;
-    transform: translateY(0) scale(1.12);
-  }
-  12.5% {
-    z-index: 2;
-    background: var(--semantic-brand-ach-color-brand-default);
-    opacity: 0.94;
-    transform: translateY(-6.5px) scale(1.04);
-  }
-  25% {
-    z-index: 1;
-    background: var(--semantic-brand-ach-color-brand-secondary);
-    opacity: 0.78;
-    transform: translateY(-9px) scale(0.9);
-  }
-  37.5% {
-    z-index: 1;
-    background: var(--semantic-brand-ach-color-brand-muted);
-    opacity: 0.54;
-    transform: translateY(-6.5px) scale(0.74);
-  }
-  50% {
-    z-index: 1;
-    background: var(--semantic-brand-ach-color-brand-subtle);
-    opacity: 0.34;
-    transform: translateY(0) scale(0.62);
-  }
-  62.5% {
-    z-index: 1;
-    background: var(--semantic-brand-ach-color-brand-muted);
-    opacity: 0.54;
-    transform: translateY(6.5px) scale(0.74);
-  }
-  75% {
-    z-index: 1;
-    background: var(--semantic-brand-ach-color-brand-secondary);
-    opacity: 0.78;
-    transform: translateY(9px) scale(0.9);
-  }
-  87.5% {
-    z-index: 2;
-    background: var(--semantic-brand-ach-color-brand-default);
-    opacity: 0.94;
-    transform: translateY(6.5px) scale(1.04);
-  }
-  100% {
-    z-index: 2;
-    background: var(--semantic-brand-ach-color-brand-default);
-    opacity: 1;
-    transform: translateY(0) scale(1.12);
+    transform: translateY(var(--y-end));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ci__packet {
+  .ci__particle {
     left: var(--static-x);
     animation: none;
-    opacity: var(--static-opacity);
-  }
-
-  .ci__helix-dot {
-    animation: none;
     background: var(--semantic-brand-ach-color-brand-default);
-    opacity: 0.85;
-    transform: translateY(var(--static-y));
+    opacity: var(--static-opacity);
+    transform: translateY(var(--y-end));
   }
 }
 </style>
